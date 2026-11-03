@@ -1,0 +1,2715 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>記帳與預算管理 — 莫蘭迪簡約理財</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Noto Sans TC & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        morandi: {
+                            bg: 'var(--m-bg, #F5F3EF)',           // 燕麥奶白 (可隨主題切換)
+                            card: '#FFFFFF',                     // 純淨微白
+                            sage: 'var(--m-primary, #8FA89B)',   // 主色 (可隨主題切換)
+                            sageDark: 'var(--m-primary-dark, #6B8577)',
+                            sageLight: 'var(--m-primary-light, #E8EFEA)',
+                            blue: 'var(--m-secondary, #93A8AC)', // 次色
+                            blueDark: 'var(--m-secondary-dark, #6F868B)',
+                            blueLight: 'var(--m-secondary-light, #EBF1F2)',
+                            rose: '#C99E9E',                     // 乾燥玫瑰粉 (警示/超支)
+                            roseDark: '#B07D7D',
+                            roseLight: '#F7EDED',
+                            apricot: '#D9C5B2',                  // 奶油杏黃 (提醒/餐費)
+                            apricotDark: '#B59B82',
+                            apricotLight: '#F8F3EE',
+                            text: '#3A3A3A',                     // 深鐵灰
+                            muted: '#787878',                    // 亞麻灰
+                            border: 'var(--m-border, #E5E0D8)'   // 柔和邊框色
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans TC', 'sans-serif']
+                    },
+                    boxShadow: {
+                        'soft': '0 6px 24px -4px rgba(58, 58, 58, 0.06)',
+                        'nav': '0 -4px 24px rgba(58, 58, 58, 0.07)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --m-bg: #F5F3EF;
+            --m-primary: #8FA89B;
+            --m-primary-dark: #6B8577;
+            --m-primary-light: #E8EFEA;
+            --m-secondary: #93A8AC;
+            --m-secondary-dark: #6F868B;
+            --m-secondary-light: #EBF1F2;
+            --m-border: #E5E0D8;
+        }
+        html {
+            font-size: 17px; /* 預設標準字級，支援客製化切換 */
+        }
+        body {
+            background-color: var(--m-bg);
+            color: #3A3A3A;
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            line-height: 1.6;
+            transition: background-color 0.25s ease;
+        }
+        /* 隱藏滾動條但保持可捲動 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* 平滑過渡動畫 */
+        .tab-content {
+            animation: fadeIn 0.22s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-32 selection:bg-morandi-sage selection:text-white">
+
+    <!-- 頂部簡約導覽列 -->
+    <header class="sticky top-0 z-30 bg-morandi-bg/95 backdrop-blur-md border-b border-morandi-border px-4 py-3.5">
+        <div class="max-w-xl mx-auto flex items-center justify-between gap-2">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-11 h-11 rounded-2xl bg-morandi-sage flex items-center justify-center text-white shadow-sm shrink-0 transition-colors">
+                    <i id="header-app-icon" class="ph-bold ph-notebook text-2xl"></i>
+                </div>
+                <div class="min-w-0">
+                    <h1 id="header-app-title" class="text-lg font-bold tracking-tight text-morandi-text truncate">記帳與預算管理</h1>
+                    <div class="flex items-center gap-1.5">
+                        <span id="cloud-status-dot" class="w-2 h-2 rounded-full bg-morandi-sage"></span>
+                        <p id="header-subtitle" class="text-xs text-morandi-muted truncate">雲端已同步</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 月份選擇、帳號綁定、主題客製化設定 -->
+            <div class="flex items-center gap-1.5 shrink-0">
+                <div class="flex items-center bg-white rounded-2xl px-3 py-2 border border-morandi-border shadow-xs">
+                    <i class="ph-bold ph-calendar-blank text-morandi-sage mr-1.5 text-base"></i>
+                    <select id="month-selector" onchange="handleMonthChange(this.value)" class="text-sm font-bold text-morandi-text bg-transparent focus:outline-none cursor-pointer">
+                        <option value="2026-11">2026/11</option>
+                        <option value="2026-10">2026/10</option>
+                    </select>
+                </div>
+                <button onclick="openAccountModal()" title="帳號綁定與雲端備份" class="w-10 h-10 rounded-2xl bg-white border border-morandi-border flex items-center justify-center text-morandi-sageDark hover:bg-morandi-sageLight transition relative">
+                    <i class="ph-bold ph-cloud-check text-lg"></i>
+                </button>
+                <button onclick="openCustomizeModal()" title="外觀顏色與客製化" class="w-10 h-10 rounded-2xl bg-white border border-morandi-border flex items-center justify-center text-morandi-muted hover:text-morandi-text transition">
+                    <i class="ph-bold ph-palette text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主內容容器 (加大間距與留白，視覺不雜亂) -->
+    <main class="max-w-xl mx-auto px-4 pt-5 space-y-5">
+
+        <!-- ==================== TAB 1: 首頁 (總覽與搜尋) ==================== -->
+        <section id="tab-home" class="tab-content space-y-5">
+            
+            <!-- 每週餐費動態提示卡 (核心功能 1 & 9 - 最醒目清爽呈現) -->
+            <div id="meal-dynamic-card" class="rounded-2xl p-5 shadow-soft border transition-colors duration-300">
+                <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+                    <div class="flex items-center gap-2">
+                        <span id="meal-status-badge" class="px-3 py-1 rounded-xl text-xs font-bold text-white bg-morandi-sage">
+                            餐費動態
+                        </span>
+                        <span class="text-sm font-bold text-morandi-text" id="meal-week-label">本週 (Week 1) 剩餘</span>
+                    </div>
+                    <!-- 切換檢視 Week 1 ~ Week 5 -->
+                    <div class="flex items-center gap-1 bg-white/90 rounded-xl p-1 border border-morandi-border">
+                        <button onclick="selectActiveWeek(1)" class="week-pill px-2.5 py-1 rounded-lg text-xs font-bold transition" data-week="1">W1</button>
+                        <button onclick="selectActiveWeek(2)" class="week-pill px-2.5 py-1 rounded-lg text-xs font-bold transition" data-week="2">W2</button>
+                        <button onclick="selectActiveWeek(3)" class="week-pill px-2.5 py-1 rounded-lg text-xs font-bold transition" data-week="3">W3</button>
+                        <button onclick="selectActiveWeek(4)" class="week-pill px-2.5 py-1 rounded-lg text-xs font-bold transition" data-week="4">W4</button>
+                        <button onclick="selectActiveWeek(5)" class="week-pill px-2.5 py-1 rounded-lg text-xs font-bold transition" data-week="5">W5</button>
+                    </div>
+                </div>
+
+                <div class="flex items-baseline justify-between my-3">
+                    <div class="flex items-baseline gap-2.5">
+                        <span id="meal-week-remain" class="text-3xl sm:text-4xl font-bold tracking-tight text-morandi-text">$0</span>
+                        <span id="meal-week-budget" class="text-sm text-morandi-muted">/ 週預算 $0</span>
+                    </div>
+                    <span id="meal-daily-advice" class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl bg-white/90 text-morandi-text border border-morandi-border/60">
+                        每日可用 $0
+                    </span>
+                </div>
+
+                <!-- 週餐費進度條 -->
+                <div class="w-full h-3.5 bg-white/90 rounded-full overflow-hidden border border-morandi-border/50 my-3">
+                    <div id="meal-week-bar" class="h-full rounded-full transition-all duration-500 bg-morandi-sage" style="width: 50%"></div>
+                </div>
+
+                <!-- 底部總餐費連動與提示 -->
+                <div class="flex items-center justify-between flex-wrap gap-2 text-xs sm:text-sm pt-1">
+                    <span id="meal-status-message" class="font-semibold text-morandi-text">餐費控管良好！</span>
+                    <span class="text-morandi-muted">
+                        本月總餐費剩餘 <strong id="meal-month-remain" class="text-morandi-text font-bold">$0</strong> / <span id="meal-month-total">$0</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- 每日 00:00 自動結算橫幅 (極簡一行式，點擊可展開細節) -->
+            <div class="bg-white rounded-2xl p-4 shadow-soft border border-morandi-border/60">
+                <div class="flex items-center justify-between gap-2">
+                    <div onclick="toggleSettlementDetail()" class="flex items-center gap-3 cursor-pointer flex-1">
+                        <div class="w-10 h-10 rounded-xl bg-morandi-blueLight text-morandi-blueDark flex items-center justify-center shrink-0">
+                            <i class="ph-bold ph-moon-stars text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-sm font-bold text-morandi-text">00:00 昨日自動結算</h3>
+                                <span id="settlement-date-badge" class="text-xs px-2 py-0.5 rounded-lg bg-morandi-bg text-morandi-muted font-medium">昨日</span>
+                            </div>
+                            <p id="settlement-summary-line" class="text-sm text-morandi-muted mt-0.5">總花費 $0｜餐費 $0</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="triggerManualMidnightSettlement()" class="text-xs font-bold px-3 py-2 rounded-xl bg-morandi-bg hover:bg-morandi-border/60 text-morandi-text transition">
+                            模擬結算
+                        </button>
+                        <button onclick="toggleSettlementDetail()" class="w-9 h-9 rounded-xl bg-morandi-bg flex items-center justify-center text-morandi-muted">
+                            <i id="settlement-chevron" class="ph-bold ph-caret-down text-sm transition-transform"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 展開結算詳情 -->
+                <div id="settlement-detail-box" class="hidden mt-4 pt-3.5 border-t border-morandi-border/60 space-y-2.5">
+                    <div class="grid grid-cols-3 gap-2.5 text-center">
+                        <div class="bg-morandi-bg/60 rounded-xl p-2.5">
+                            <p class="text-xs text-morandi-muted">結算日總花費</p>
+                            <p id="settle-total-val" class="text-base font-bold text-morandi-text mt-0.5">$0</p>
+                        </div>
+                        <div class="bg-morandi-bg/60 rounded-xl p-2.5">
+                            <p class="text-xs text-morandi-muted">當日餐費</p>
+                            <p id="settle-meal-val" class="text-base font-bold text-morandi-sageDark mt-0.5">$0</p>
+                        </div>
+                        <div class="bg-morandi-bg/60 rounded-xl p-2.5">
+                            <p class="text-xs text-morandi-muted">最高單筆</p>
+                            <p id="settle-top-val" class="text-sm font-bold text-morandi-roseDark mt-1 truncate">-</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-morandi-muted text-center">
+                        距離今日 00:00 自動結算還有 <span id="midnight-countdown" class="font-mono font-bold text-morandi-text">--:--:--</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- 💳 信用卡消費專屬彙整區塊 (記帳選擇信用卡時自動導入此區塊) -->
+            <div class="bg-white rounded-2xl p-4 shadow-soft border border-morandi-border/60">
+                <div class="flex items-center justify-between gap-2">
+                    <div onclick="toggleCreditCardDetail()" class="flex items-center gap-3 cursor-pointer flex-1">
+                        <div class="w-10 h-10 rounded-xl bg-morandi-roseLight text-morandi-roseDark flex items-center justify-center shrink-0">
+                            <i class="ph-bold ph-credit-card text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-sm font-bold text-morandi-text">信用卡待繳帳單專區</h3>
+                                <span id="cc-count-badge" class="text-xs px-2 py-0.5 rounded-lg bg-morandi-roseLight text-morandi-roseDark font-bold">0 筆</span>
+                            </div>
+                            <p class="text-xs text-morandi-muted mt-0.5">記帳選「信用卡」之金額會自動導入此處累計</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="text-right">
+                            <span class="text-xs text-morandi-muted block">本月刷卡累計</span>
+                            <span id="cc-home-total" class="text-base font-bold text-morandi-roseDark">$0</span>
+                        </div>
+                        <button onclick="toggleCreditCardDetail()" class="w-9 h-9 rounded-xl bg-morandi-bg flex items-center justify-center text-morandi-muted">
+                            <i id="cc-chevron" class="ph-bold ph-caret-down text-sm transition-transform"></i>
+                        </button>
+                    </div>
+                    <button onclick=" toggleCreditCardDetail()" class="w-9 h-9 rounded-xl bg-morandi-bg flex items-center justify-center text-morandi-muted">
+                        <i id="cc-chevron" class="ph-bold ph-caret-down text-sm transition-transform"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 展開信用卡刷卡明細 -->
+            <div id="cc-detail-box" class="hidden mt-4 pt-3.5 border-t border-morandi-border/60 space-y-2.5">
+                <div class="space-y-2 max-h-60 overflow-y-auto pr-1" id="cc-transactions-mini-list">
+                    <!-- JS 動態顯示本月刷卡帳目 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 快速搜尋列 (支援備註與 #照片標籤，簡潔不擁擠) -->
+            <div class="bg-white rounded-2xl p-4 shadow-soft border border-morandi-border/60 space-y-3">
+                <div class="relative flex items-center">
+                    <i class="ph-bold ph-magnifying-glass text-morandi-muted absolute left-4 text-lg"></i>
+                    <input 
+                        type="text" 
+                        id="search-input" 
+                        oninput="renderHome()"
+                        placeholder="搜尋備註或 #照片標籤 (例如：全聯、#發票明細)..." 
+                        class="w-full pl-11 pr-16 py-3 bg-morandi-bg/80 rounded-xl text-sm text-morandi-text placeholder-morandi-muted focus:outline-none focus:ring-2 focus:ring-morandi-sage/50 transition"
+                    >
+                    <button id="clear-search-btn" onclick="clearSearch()" class="hidden absolute right-3.5 text-xs font-bold text-morandi-muted hover:text-morandi-text px-2 py-1">
+                        清除
+                    </button>
+                </div>
+
+                <!-- 標籤與含照片快速篩選 -->
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5" id="quick-tags-bar">
+                        <!-- JS 動態載入 #Tag -->
+                    </div>
+                    <button id="filter-photo-btn" onclick="togglePhotoFilter()" class="shrink-0 flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border border-morandi-border text-morandi-muted hover:border-morandi-blue transition">
+                        <i class="ph-bold ph-camera text-sm"></i>
+                        <span>有照片</span>
+                    </button>
+                </div>
+
+                <!-- 搜尋結果統計條 -->
+                <div id="search-summary-bar" class="hidden pt-2.5 border-t border-morandi-border/60 flex items-center justify-between text-sm">
+                    <span id="search-summary-text" class="text-morandi-muted font-medium">符合 0 筆</span>
+                    <span id="search-summary-total" class="font-bold text-morandi-text">合計 $0</span>
+                </div>
+            </div>
+
+            <!-- 每日花費明細列表 -->
+            <div class="space-y-3.5">
+                <div class="flex items-center justify-between px-1">
+                    <h2 class="text-base font-bold text-morandi-text flex items-center gap-2">
+                        <i class="ph-bold ph-list-dashes text-morandi-sage text-lg"></i>
+                        <span>每日花費明細</span>
+                    </h2>
+                    <button onclick="openExpenseModal()" class="text-sm font-bold text-morandi-sageDark hover:underline flex items-center gap-1">
+                        <i class="ph-bold ph-plus"></i>新增一筆
+                    </button>
+                </div>
+
+                <div id="transactions-list" class="space-y-4">
+                    <!-- 由 JS 動態渲染 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 2: 月分配 (預算規劃 - 清晰分區且收入可新增選項) ==================== -->
+        <section id="tab-budget" class="tab-content hidden space-y-5">
+            
+            <!-- 頂部預算剩餘總覽卡 -->
+            <div class="bg-white rounded-2xl p-5 shadow-soft border border-morandi-border/60 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-bold text-morandi-muted">本月可分配餘額 (收入－固定－變動－存錢)</span>
+                        <h2 id="formula-remain" class="text-2xl sm:text-3xl font-bold text-morandi-text mt-1">$0</h2>
+                    </div>
+                    <span id="unallocated-badge" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-morandi-sageLight text-morandi-sageDark">
+                        平衡良好
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center pt-2 border-t border-morandi-border/50">
+                    <div class="bg-morandi-bg/70 rounded-xl p-2.5">
+                        <p class="text-xs text-morandi-muted">總月收入</p>
+                        <p id="formula-income" class="text-sm font-bold text-morandi-text mt-0.5">$0</p>
+                    </div>
+                    <div class="bg-morandi-bg/70 rounded-xl p-2.5">
+                        <p class="text-xs text-morandi-muted">固定支出</p>
+                        <p id="formula-fixed" class="text-sm font-bold text-morandi-blueDark mt-0.5">$0</p>
+                    </div>
+                    <div class="bg-morandi-bg/70 rounded-xl p-2.5">
+                        <p class="text-xs text-morandi-muted">變動(含餐費)</p>
+                        <p id="formula-variable" class="text-sm font-bold text-morandi-apricotDark mt-0.5">$0</p>
+                    </div>
+                    <div class="bg-morandi-bg/70 rounded-xl p-2.5">
+                        <p class="text-xs text-morandi-muted">目標存錢</p>
+                        <p id="formula-saving" class="text-sm font-bold text-morandi-sageDark mt-0.5">$0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 1. 月收入設定 (可自由新增/自訂多個收入選項並自動加總) -->
+            <div class="bg-white rounded-2xl p-5 shadow-soft border border-morandi-border/60 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-morandi-sageLight text-morandi-sageDark flex items-center justify-center">
+                            <i class="ph-bold ph-wallet text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-morandi-text">1. 本月總收入</h3>
+                            <p class="text-xs text-morandi-muted">可自由新增薪資、兼職、獎金等收入來源</p>
+                        </div>
+                    </div>
+                    <span id="income-total-label" class="text-lg font-bold text-morandi-sageDark">$0</span>
+                </div>
+
+                <!-- 收入選項列表 -->
+                <div id="income-items-list" class="space-y-2.5">
+                    <!-- JS 動態渲染 -->
+                </div>
+
+                <!-- 新增收入選項 -->
+                <div class="pt-3 border-t border-morandi-border/50 flex items-center gap-2">
+                    <input type="text" id="new-income-name" placeholder="新增收入選項 (如：本薪、兼職、股息)" class="flex-1 px-3.5 py-2.5 bg-morandi-bg rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-morandi-sage">
+                    <input type="number" id="new-income-amount" placeholder="金額" class="w-28 px-3.5 py-2.5 bg-morandi-bg rounded-xl text-sm text-right font-semibold focus:outline-none focus:ring-2 focus:ring-morandi-sage">
+                    <button onclick="addBudgetItem('income')" class="px-4 py-2.5 rounded-xl bg-morandi-sage text-white text-sm font-bold hover:bg-morandi-sageDark shrink-0 transition">
+                        ＋新增
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. 固定支出 (支援勾選常用與一鍵代入) -->
+            <div class="bg-white rounded-2xl p-5 shadow-soft border border-morandi-border/60 space-y-4">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-morandi-blueLight text-morandi-blueDark flex items-center justify-center">
+                            <i class="ph-bold ph-push-pin text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-morandi-text">2. 固定支出 <span id="fixed-total-label" class="text-base font-bold text-morandi-blueDark ml-1">$0</span></h3>
+                            <p class="text-xs text-morandi-muted">勾選「常用」後，每月可一鍵自動帶入</p>
+                        </div>
+                    </div>
+                    <button onclick="importTemplateFixedItems()" class="text-xs font-bold px-3.5 py-2 rounded-xl bg-morandi-blue text-white hover:opacity-95 shadow-xs transition flex items-center gap-1.5">
+                        <i class="ph-bold ph-magic-wand text-sm"></i>
+                        <span>一鍵代入常用</span>
+                    </button>
+                </div>
+
+                <!-- 固定支出項目清單 -->
+                <div id="fixed-items-list" class="space-y-2.5">
+                    <!-- JS 動態渲染 -->
+                </div>
+
+                <!-- 新增固定支出項目 -->
+                <div class="pt-3 border-t border-morandi-border/50 flex items-center gap-2">
+                    <input type="text" id="new-fixed-name" placeholder="新增固定支出 (如：房租、網路費)" class="flex-1 px-3.5 py-2.5 bg-morandi-bg rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-morandi-blue">
+                    <input type="number" id="new-fixed-amount" placeholder="金額" class="w-28 px-3.5 py-2.5 bg-morandi-bg rounded-xl text-sm text-right font-semibold focus:outline-none focus:ring-2 focus:ring-morandi-blue">
+                    <button onclick="addBudgetItem('fixed')" class="px-4 py-2.5 rounded-xl bg-morandi-text text-white text-sm font-bold hover:opacity-90 shrink-0 transition">
+                        ＋新增
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3. 變動支出 (第一項固定為每週餐費與總餐費連動運算) -->
+            <div class="bg-white rounded-2xl p-5 shadow-soft border border-morandi-border/60 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-morandi-apricotLight text-morandi-apricotDark flex items-center justify-center">
+                            <i class="ph-bold ph-shopping-bag-open text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-morandi-text">3. 變動支出</h3>
+                            <p class="text-xs text-morandi-muted">第一項固定為餐費，其餘可自由新增</p>
+                        </div>
+                    </div>
+                    <span id="variable-total-label" class="text-lg font-bold text-morandi-apricotDark">$0</span>
+                </div>
+
+                <!-- 第一項固定：餐費總運算與 Week 1 ~ Week 5 設定面板 -->
+                <div class="rounded-2xl bg-morandi-apricotLight/70 border border-morandi-apricot p-4 space-y-3.5">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-1 rounded-lg bg-morandi-apricotDark text-white text-xs font-bold">第一項</span>
+                            <span class="text-base font-bold text-morandi-text">🍴 總餐費預算</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span id="meal-total-computed" class="text-lg font-bold text-morandi-text">$0</span>
+                            <button onclick="toggleMealWeeksPanel()" class="px-3 py-1.5 rounded-xl bg-white text-xs font-bold text-morandi-text border border-morandi-border shadow-xs flex items-center gap-1">
+                                <span>編輯 W1~W5</span>
+                                <i id="meal-weeks-caret" class="ph-bold ph-caret-up text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Week 1 ~ Week 5 輸入選單 -->
+                    <div id="meal-weeks-panel" class="pt-3 border-t border-morandi-apricot/60 space-y-3">
+                        <div class="flex items-center justify-between text-xs text-morandi-muted">
+                            <span>輸入各週餐費，自動加總為總餐費：</span>
+                            <button onclick="evenDistributeMealWeeks()" class="text-morandi-sageDark font-bold hover:underline">全部歸零 ($0)</button>
+                        </div>
+                        <div class="grid grid-cols-5 gap-2">
+                            <div class="bg-white rounded-xl p-2 border border-morandi-border text-center">
+                                <label class="text-xs font-bold text-morandi-muted block mb-1">W1</label>
+                                <input type="number" id="meal-w1-input" onchange="updateMealWeekBudget(0, this.value)" class="w-full text-center text-sm font-bold text-morandi-text bg-morandi-bg/70 rounded-lg py-1.5 focus:outline-none focus:ring-2 focus:ring-morandi-sage">
+                            </div>
+                            <div class="bg-white rounded-xl p-2 border border-morandi-border text-center">
+                                <label class="text-xs font-bold text-morandi-muted block mb-1">W2</label>
+                                <input type="number" id="meal-w2-input" onchange="updateMealWeekBudget(1, this.value)" class="w-full text-center text-sm font-bold text-morandi-text bg-morandi-bg/70 rounded-lg py-1.5 focus:outline-none focus:ring-2 focus:ring-morandi-sage">
+                            </div>
+                            <div class="bg-white rounded-xl p-2 border border-morandi-border text-center">
+                                <label class="text-xs font-bold text-morandi-muted block mb-1">W3</label>
+                                <input type="number" id="meal-w3-input" onchange="updateMealWeekBudget(2, this.value)" class="w-full text-center text-sm font-bold text-morandi-text bg-morandi-bg/70 rounded-lg py-1.5 focus:outline-none focus:ring-2 focus:ring-morandi-sage">
+                            </div>
+                            <div class="bg-white rounded-xl p-2 border border-morandi-border text-center">
+                                <label class="text-xs font-bold text-morandi-muted block mb-1">W4</label>
+                                <input type="number" id="meal-w4-input" onchange="updateMealWeekBudget(3, this.value)" class="w-full text-center text-sm font-bold text-morandi-text bg-morandi-bg/70 rounded-lg py-1.5 focus:outline-none focus:ring-2 focus:ring-morandi-sage">
+                            </div>
+                            <div class="bg-white rounded-xl p-2 border border-morandi-border text-center">
+                                <label class="text-xs font-bold text-morandi-muted block mb-1">W5</label>
+                                <input type="number" id="meal-w5-input" onchange="updateMealWeekBudget(4, this.value)" class="w-full text-center text-sm font-bold text-morandi-text bg-morandi-bg/70 rounded-lg py-1.5 focus:outline-none focus:ring-2 focus:ring-morandi-sage">
+                            </div>
+                        </div>
+                        <div class="bg-white/90 rounded-xl px-3.5 py-2 flex items-center justify-between text-xs sm:text-sm">
+                            <span class="text-morandi-muted">總餐費運算 (W1+W2+W3+W4+W5)</span>
+                            <span id="meal-formula-result" class="font-bold text-morandi-sageDark">＝ $0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 其他自訂變動支出列表 -->
+                <div id="variable-items-list" class="space-y-2.5">
+                    <!-- JS 動態渲染 -->
+                </div>
+
+                <!-- 新增變動支出項目 -->
+                <div class="pt-3 border-t border-morandi-border/50 flex items-center gap-2">
+                    <input type="text" id="new-variable-name" placeholder="新增變動支出 (如：交通、娛樂、日用品)" class="flex-1 px-3.5 py-2.5 bg-morandi-bg rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-morandi-sage">
+                    <input type="number" id="new-variable-amount" placeholder="金額" class="w-28 px-3.5 py-2.5 bg-morandi-bg rounded-xl text-sm text-right font-semibold focus:outline-none focus:ring-2 focus:ring-morandi-sage">
+                    <button onclick="addBudgetItem('variable')" class="px-4 py-2.5 rounded-xl bg-morandi-text text-white text-sm font-bold hover:opacity-90 shrink-0 transition">
+                        ＋新增
+                    </button>
+                </div>
+            </div>
+
+            <!-- 4. 每月存錢規劃 -->
+            <div class="bg-white rounded-2xl p-5 shadow-soft border border-morandi-border/60 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-morandi-sageLight text-morandi-sageDark flex items-center justify-center">
+                            <i class="ph-bold ph-piggy-bank text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-morandi-text">4. 本月存錢規劃</h3>
+                            <p class="text-xs text-morandi-muted">自動同步累積至「金庫」總存款</p>
+                        </div>
+                    </div>
+                    <span id="saving-total-label" class="text-lg font-bold text-morandi-sageDark">$0</span>
+                </div>
+
+                <div id="saving-items-list" class="space-y-2.5">
+                    <!-- JS 動態渲染 -->
+                </div>
+
+                <!-- 新增存錢項目 -->
+                <div class="pt-3 border-t border-morandi-border/50 flex items-center gap-2">
+                    <input type="text" id="new-saving-name" placeholder="新增存錢項目 (如：定期定額、旅遊基金)" class="flex-1 px-3.5 py-2.5 bg-morandi-bg rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-morandi-sage">
+                    <input type="number" id="new-saving-amount" placeholder="金額" class="w-28 px-3.5 py-2.5 bg-morandi-bg rounded-xl text-sm text-right font-semibold focus:outline-none focus:ring-2 focus:ring-morandi-sage">
+                    <button onclick="addBudgetItem('saving')" class="px-4 py-2.5 rounded-xl bg-morandi-sage text-white text-sm font-bold hover:bg-morandi-sageDark shrink-0 transition">
+                        ＋新增
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 3: 分析 (月報表與檢討) ==================== -->
+        <section id="tab-analysis" class="tab-content hidden space-y-5">
+            
+            <!-- 月結餘與預算執行總覽卡 -->
+            <div class="bg-white rounded-2xl p-5 shadow-soft border border-morandi-border/60 space-y-4">
+                <div class="flex items-center justify-between flex-wrap gap-3">
+                    <div>
+                        <span class="text-xs font-bold text-morandi-muted">本月目前結餘 (總收入－已花費－已規劃存錢)</span>
+                        <h3 class="text-2xl sm:text-3xl font-bold text-morandi-text mt-1" id="analysis-surplus-val">$0</h3>
+                    </div>
+                    <button onclick="transferSurplusToVault()" class="px-4 py-2.5 rounded-xl bg-morandi-sage text-white text-sm font-bold shadow-xs hover:bg-morandi-sageDark transition flex items-center gap-1.5">
+                        <i class="ph-bold ph-vault text-base"></i>
+                        <span>將結餘轉入金庫</span>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2.5 pt-3 border-t border-morandi-border/60 text-center">
+                    <div class="bg-morandi-bg/60 rounded-xl p-3">
+                        <p class="text-xs text-morandi-muted">本月總收入</p>
+                        <p id="analysis-income-val" class="text-base font-bold text-morandi-text mt-0.5">$0</p>
+                    </div>
+                    <div class="bg-morandi-bg/60 rounded-xl p-3">
+                        <p class="text-xs text-morandi-muted">目前已花費</p>
+                        <p id="analysis-spent-val" class="text-base font-bold text-morandi-roseDark mt-0.5">$0</p>
+                    </div>
+                    <div class="bg-morandi-bg/60 rounded-xl p-3">
+                        <p class="text-xs text-morandi-muted">已規劃存錢</p>
+                        <p id="analysis-PlannedSave-val" class="text-base font-bold text-morandi-sageDark mt-0.5">$0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 💳 付款方式與信用卡帳單分析卡 -->
+            <div class="bg-white rounded-2xl p-5 shadow-soft border border-morandi-border/60 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-base font-bold text-morandi-text flex items-center gap-2">
+                        <i class="ph-bold ph-credit-card text-morandi-blueDark text-xl"></i>
+                        <span>付款方式與信用卡消費區塊</span>
+                    </h3>
+                    <span id="analysis-cc-ratio" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-morandi-blueLight text-morandi-blueDark">刷卡佔比 0%</span>
+                </div>
+                <div id="analysis-payment-breakdown" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <!-- JS 動態渲染現金、信用卡、行動支付總額 -->
+                </div>
+                <div id="analysis-cc-cards-detail" class="space-y-2 pt-2 border-t border-morandi-border/50">
+                    <!-- JS 動態渲染各張信用卡帳單明細與結清狀態 -->
+                </div>
+            </div>
+
+            <!-- 莫蘭迪消費佔比圖表與 Top 3 高消費排行 -->
+            <div class="bg-white rounded-2xl p-5 shadow-soft border border-morandi-border/60 space-y-4">
+                <h3 class="text-base font-bold text-morandi-text flex items-center gap-2">
+                    <i class="ph-bold ph-chart-donut text-morandi-sage text-xl"></i>
+                    <span>花費較多的項目 (Top 3 排行榜)</span>
+                </h3>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 items-center">
+                    <!-- SVG 莫蘭迪甜甜圈圖 -->
+                    <div class="flex flex-col items-center justify-center relative">
+                        <svg id="donut-chart" viewBox="0 0 160 160" class="w-44 h-44 -rotate-90"></svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                            <span class="text-xs text-morandi-muted">總花費</span>
+                            <span id="donut-center-total" class="text-base font-bold text-morandi-text">$0</span>
+                        </div>
+                    </div>
+
+                    <!-- Top 3 花費排行榜 -->
+                    <div class="space-y-3" id="top3-spending-list">
+                        <!-- JS 動態渲染 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 下月預算調整與不足/超支檢討系統 (核心功能 4) -->
+            <div class="bg-white rounded-2xl p-5 shadow-soft border border-morandi-border/60 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-base font-bold text-morandi-text flex items-center gap-2">
+                        <i class="ph-bold ph-scales text-morandi-rose text-xl"></i>
+                        <span>預算檢討與下月調整建議</span>
+                    </h3>
+                    <span class="text-xs text-morandi-muted">實際 vs 預算</span>
+                </div>
+
+                <div id="budget-review-list" class="space-y-3">
+                    <!-- JS 動態渲染各分類預算執行度與建議 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 4: 金庫 (累積存款與願望清單) ==================== -->
+        <section id="tab-vault" class="tab-content hidden space-y-5">
+            
+            <!-- 累計總存款大看板 -->
+            <div class="bg-gradient-to-br from-morandi-sage to-morandi-blue rounded-2xl p-6 text-white shadow-soft">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-bold text-white/95 flex items-center gap-1.5">
+                        <i class="ph-bold ph-sparkle text-lg"></i>
+                        開始使用 APP 至今累積總存款
+                    </span>
+                </div>
+                <h2 id="vault-grand-total" class="text-4xl font-bold tracking-tight my-3">$0</h2>
+                <div class="grid grid-cols-3 gap-2.5 pt-3.5 border-t border-white/25 text-sm">
+                    <div>
+                        <p class="text-white/80 text-xs">初始累積</p>
+                        <p id="vault-base-saved" class="font-bold mt-0.5">$0</p>
+                    </div>
+                    <div>
+                        <p class="text-white/80 text-xs">每月規劃存入</p>
+                        <p id="vault-monthly-saved" class="font-bold mt-0.5">$0</p>
+                    </div>
+                    <div>
+                        <p class="text-white/80 text-xs">月結餘額外轉入</p>
+                        <p id="vault-bonus-saved" class="font-bold mt-0.5">$0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 自訂「願望清單 / 存錢目標」進度條 -->
+            <div class="bg-white rounded-2xl p-5 shadow-soft border border-morandi-border/60 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-base font-bold text-morandi-text flex items-center gap-2">
+                            <i class="ph-bold ph-shooting-star text-morandi-sage text-xl"></i>
+                            <span>願望清單 / 存錢目標</span>
+                        </h3>
+                        <p class="text-xs text-morandi-muted mt-0.5">將累積存款化為具體的圓夢進度條</p>
+                    </div>
+                    <button onclick="openAddWishlistModal()" class="px-4 py-2 rounded-xl bg-morandi-sage text-white text-sm font-bold hover:bg-morandi-sageDark transition shadow-xs">
+                        ＋新增目標
+                    </button>
+                </div>
+
+                <!-- 願望清單卡片容器 -->
+                <div id="wishlist-container" class="space-y-3.5">
+                    <!-- JS 動態渲染 -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==================== 固定底部導覽列 (放大圖示與文字) ==================== -->
+    <nav class="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-morandi-border shadow-nav">
+        <div class="max-w-xl mx-auto px-4 h-20 grid grid-cols-5 items-center relative">
+            
+            <button onclick="switchTab('home')" id="nav-home" class="nav-btn flex flex-col items-center justify-center gap-1 text-morandi-sage font-bold transition">
+                <i class="ph-fill ph-house text-2xl"></i>
+                <span class="text-xs">首頁</span>
+            </button>
+
+            <button onclick="switchTab('budget')" id="nav-budget" class="nav-btn flex flex-col items-center justify-center gap-1 text-morandi-muted hover:text-morandi-text transition">
+                <i class="ph ph-sliders-horizontal text-2xl"></i>
+                <span class="text-xs">月分配</span>
+            </button>
+
+            <!-- 正中央突出「＋記帳」按鈕 -->
+            <div class="flex flex-col items-center justify-center">
+                <button onclick="openExpenseModal()" class="w-16 h-16 -mt-7 rounded-full bg-morandi-sage text-white shadow-lg flex items-center justify-center hover:bg-morandi-sageDark active:scale-95 transition border-4 border-morandi-bg">
+                    <i class="ph-bold ph-plus text-3xl"></i>
+                </button>
+                <span class="text-xs font-bold text-morandi-sageDark mt-0.5">記帳</span>
+            </div>
+
+            <button onclick="switchTab('analysis')" id="nav-analysis" class="nav-btn flex flex-col items-center justify-center gap-1 text-morandi-muted hover:text-morandi-text transition">
+                <i class="ph ph-chart-pie-slice text-2xl"></i>
+                <span class="text-xs">分析</span>
+            </button>
+
+            <button onclick="switchTab('vault')" id="nav-vault" class="nav-btn flex flex-col items-center justify-center gap-1 text-morandi-muted hover:text-morandi-text transition">
+                <i class="ph ph-piggy-bank text-2xl"></i>
+                <span class="text-xs">金庫</span>
+            </button>
+
+        </div>
+    </nav>
+
+    <!-- ==================== MODAL 1: 快速記帳與拍照上傳彈窗 ==================== -->
+    <div id="expense-modal" class="fixed inset-0 z-50 hidden bg-black/45 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-morandi-bg w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 shadow-xl max-h-[92vh] overflow-y-auto space-y-4">
+            <div class="flex items-center justify-between border-b border-morandi-border pb-3.5">
+                <h3 class="text-lg font-bold text-morandi-text flex items-center gap-2">
+                    <i class="ph-bold ph-pencil-simple-line text-morandi-sage text-xl"></i>
+                    <span>記錄今日花費</span>
+                </h3>
+                <button onclick="closeExpenseModal()" class="w-9 h-9 rounded-full bg-white flex items-center justify-center text-morandi-muted hover:text-morandi-text">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <!-- 金額與日期 -->
+            <div class="grid grid-cols-2 gap-3.5">
+                <div class="bg-white rounded-2xl p-3.5 border border-morandi-border">
+                    <label class="text-xs font-bold text-morandi-muted block">消費金額 ($)</label>
+                    <input type="number" id="tx-amount" placeholder="0" oninput="previewTxMealImpact()" class="w-full text-2xl font-bold text-morandi-text mt-1 focus:outline-none">
+                </div>
+                <div class="bg-white rounded-2xl p-3.5 border border-morandi-border">
+                    <label class="text-xs font-bold text-morandi-muted block">消費日期</label>
+                    <input type="date" id="tx-date" onchange="autoDetectWeekFromDate()" class="w-full text-sm font-bold text-morandi-text mt-2 focus:outline-none bg-transparent">
+                </div>
+            </div>
+
+            <!-- 主分類與子分類選擇 -->
+            <div class="bg-white rounded-2xl p-4 border border-morandi-border space-y-3.5">
+                <div>
+                    <label class="text-xs font-bold text-morandi-muted block mb-2">選擇分類</label>
+                    <div class="grid grid-cols-3 gap-2.5">
+                        <button type="button" onclick="selectTxMainType('meal')" id="tx-type-meal" class="tx-type-btn py-2.5 rounded-xl text-sm font-bold border transition">
+                            🍴 餐費
+                        </button>
+                        <button type="button" onclick="selectTxMainType('variable')" id="tx-type-variable" class="tx-type-btn py-2.5 rounded-xl text-sm font-bold border transition">
+                            🛍️ 變動支出
+                        </button>
+                        <button type="button" onclick="selectTxMainType('fixed')" id="tx-type-fixed" class="tx-type-btn py-2.5 rounded-xl text-sm font-bold border transition">
+                            📌 固定支出
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 若為餐費：選擇所屬 Week 1 ~ Week 5 與即時餘額預覽 -->
+                <div id="tx-meal-week-box" class="bg-morandi-apricotLight/80 rounded-xl p-3 border border-morandi-apricot space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-bold text-morandi-text">扣除餐費週次：</span>
+                        <select id="tx-week-select" onchange="previewTxMealImpact()" class="text-sm font-bold bg-white px-3 py-1.5 rounded-xl border border-morandi-border focus:outline-none">
+                            <option value="1">Week 1 (1~7日)</option>
+                            <option value="2">Week 2 (8~14日)</option>
+                            <option value="3">Week 3 (15~21日)</option>
+                            <option value="4">Week 4 (22~28日)</option>
+                            <option value="5">Week 5 (29~31日)</option>
+                        </select>
+                    </div>
+                    <p id="tx-meal-preview-text" class="text-xs text-morandi-sageDark font-bold">
+                        記帳後本週餐費預計剩餘：$0
+                    </p>
+                </div>
+
+                <!-- 子分類下拉選單 -->
+                <div>
+                    <label class="text-xs font-bold text-morandi-muted block mb-1.5">細項名稱</label>
+                    <select id="tx-subcategory" class="w-full px-3.5 py-2.5 bg-morandi-bg rounded-xl text-sm font-bold text-morandi-text focus:outline-none">
+                        <!-- JS 動態載入 -->
+                    </select>
+                </div>
+
+                <!-- 💳 新增：付款方式選擇 (若選信用卡自動導入信用卡區塊) -->
+                <div class="pt-3 border-t border-morandi-border/60 space-y-2.5">
+                    <label class="text-xs font-bold text-morandi-muted block">付款方式 (選「信用卡」將自動導入信用卡帳單區)</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" onclick="selectTxPaymentMethod('cash')" id="pay-btn-cash" class="py-2.5 rounded-xl text-xs font-bold border transition">
+                            💵 現金 / 轉帳
+                        </button>
+                        <button type="button" onclick="selectTxPaymentMethod('credit')" id="pay-btn-credit" class="py-2.5 rounded-xl text-xs font-bold border transition">
+                            💳 信用卡
+                        </button>
+                        <button type="button" onclick="selectTxPaymentMethod('mobile')" id="pay-btn-mobile" class="py-2.5 rounded-xl text-xs font-bold border transition">
+                            📱 行動支付
+                        </button>
+                    </div>
+
+                    <!-- 當選擇「信用卡」時顯示自動導入提示 (不需選擇哪張卡) -->
+                    <div id="tx-credit-card-box" class="hidden bg-morandi-roseLight/70 rounded-xl p-3 border border-morandi-rose">
+                        <p class="text-xs text-morandi-roseDark font-bold flex items-center gap-1.5">
+                            <i class="ph-bold ph-credit-card text-base"></i>
+                            <span>✨ 此筆金額將自動導入首頁與分析頁的「信用卡待繳帳單專區」累計</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 備註與 #照片標籤 -->
+            <div class="bg-white rounded-2xl p-4 border border-morandi-border space-y-3">
+                <div>
+                    <label class="text-xs font-bold text-morandi-muted block mb-1.5">消費備註 (買了什麼 / 吃了什麼)</label>
+                    <input type="text" id="tx-note" placeholder="例如：雞胸便當、全聯買鮮奶與雞蛋..." class="w-full px-3.5 py-2.5 bg-morandi-bg rounded-xl text-sm text-morandi-text focus:outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-morandi-muted block mb-1.5">#照片標籤 (方便日後搜尋)</label>
+                    <input type="text" id="tx-tags" placeholder="例如：#發票明細 #全聯" class="w-full px-3.5 py-2.5 bg-morandi-bg rounded-xl text-sm text-morandi-blueDark font-bold focus:outline-none">
+                    <div class="flex items-center gap-2 mt-2 flex-wrap">
+                        <button type="button" onclick="appendQuickTag('#發票明細')" class="text-xs px-2.5 py-1 rounded-lg bg-morandi-blueLight text-morandi-blueDark font-bold">#發票明細</button>
+                        <button type="button" onclick="appendQuickTag('#全聯')" class="text-xs px-2.5 py-1 rounded-lg bg-morandi-blueLight text-morandi-blueDark font-bold">#全聯</button>
+                        <button type="button" onclick="appendQuickTag('#外食紀錄')" class="text-xs px-2.5 py-1 rounded-lg bg-morandi-blueLight text-morandi-blueDark font-bold">#外食紀錄</button>
+                        <button type="button" onclick="appendQuickTag('#網購截圖')" class="text-xs px-2.5 py-1 rounded-lg bg-morandi-blueLight text-morandi-blueDark font-bold">#網購截圖</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 拍照 / 上傳發票或商品照片 -->
+            <div class="bg-white rounded-2xl p-4 border border-morandi-border space-y-3">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <label class="text-xs font-bold text-morandi-muted flex items-center gap-1.5">
+                        <i class="ph-bold ph-camera text-morandi-sage text-base"></i>
+                        <span>拍照或截圖發票明細</span>
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="useMockSamplePhoto('receipt')" class="text-xs px-2.5 py-1 rounded-lg bg-morandi-bg text-morandi-text hover:bg-morandi-border/60 font-bold">
+                            範例發票
+                        </button>
+                        <button type="button" onclick="useMockSamplePhoto('food')" class="text-xs px-2.5 py-1 rounded-lg bg-morandi-bg text-morandi-text hover:bg-morandi-border/60 font-bold">
+                            範例餐點
+                        </button>
+                    </div>
+                </div>
+
+                <label class="flex flex-col items-center justify-center border-2 border-dashed border-morandi-border rounded-xl p-4 cursor-pointer hover:border-morandi-sage transition bg-morandi-bg/40">
+                    <input type="file" id="tx-photo-input" accept="image/*" onchange="handlePhotoUpload(event)" class="hidden">
+                    <div id="tx-photo-placeholder" class="text-center py-1">
+                        <i class="ph ph-image text-3xl text-morandi-muted"></i>
+                        <p class="text-sm text-morandi-muted mt-1">點擊拍照或從手機相簿選擇照片</p>
+                    </div>
+                    <div id="tx-photo-preview-wrap" class="hidden relative w-full">
+                        <img id="tx-photo-preview" src="" alt="Preview" class="w-full h-40 object-cover rounded-xl">
+                        <button type="button" onclick="clearUploadedPhoto(event)" class="absolute top-2 right-2 px-3 py-1 rounded-lg bg-black/65 text-white text-xs font-bold">
+                            移除照片
+                        </button>
+                    </div>
+                </label>
+            </div>
+
+            <button onclick="saveTransaction()" class="w-full py-3.5 rounded-2xl bg-morandi-sage text-white font-bold text-base shadow-md hover:bg-morandi-sageDark transition">
+                儲存這筆記帳
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL 2: 照片與發票明細放大檢視器 ==================== -->
+    <div id="photo-lightbox" onclick="closePhotoLightbox()" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-xs flex items-center justify-center p-4">
+        <div onclick="event.stopPropagation()" class="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl">
+            <div class="relative bg-black">
+                <img id="lightbox-img" src="" alt="消費照片明細" class="w-full max-h-[65vh] object-contain mx-auto">
+                <button onclick="closePhotoLightbox()" class="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/60 text-white flex items-center justify-center">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span id="lightbox-cat" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-morandi-sageLight text-morandi-sageDark">分類</span>
+                    <span id="lightbox-amount" class="text-lg font-bold text-morandi-text">$0</span>
+                </div>
+                <p id="lightbox-note" class="text-base font-bold text-morandi-text"></p>
+                <div class="flex items-center justify-between pt-1">
+                    <div id="lightbox-tags" class="flex gap-1.5 flex-wrap"></div>
+                    <span id="lightbox-date" class="text-xs text-morandi-muted font-mono"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL 3: 新增願望清單 / 存錢投入彈窗 ==================== -->
+    <div id="wishlist-modal" class="fixed inset-0 z-50 hidden bg-black/45 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-xl space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold text-morandi-text">新增存錢目標</h3>
+                <button onclick="closeAddWishlistModal()" class="text-morandi-muted hover:text-morandi-text">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+            <div class="space-y-3.5">
+                <div>
+                    <label class="text-xs font-bold text-morandi-muted block mb-1">目標名稱</label>
+                    <input type="text" id="wish-title-input" placeholder="例如：日本旅遊基金、買新電腦" class="w-full px-3.5 py-2.5 bg-morandi-bg rounded-xl text-sm focus:outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-morandi-muted block mb-1">目標總金額 ($)</label>
+                    <input type="number" id="wish-target-input" placeholder="30000" class="w-full px-3.5 py-2.5 bg-morandi-bg rounded-xl text-sm font-bold focus:outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-morandi-muted block mb-1">目前已存起始金額 ($)</label>
+                    <input type="number" id="wish-current-input" placeholder="0" value="0" class="w-full px-3.5 py-2.5 bg-morandi-bg rounded-xl text-sm font-bold focus:outline-none">
+                </div>
+            </div>
+            <button onclick="saveNewWishlist()" class="w-full py-3 rounded-xl bg-morandi-sage text-white text-sm font-bold hover:bg-morandi-sageDark transition">
+                建立存錢目標
+            </button>
+        </div>
+    </div>
+
+    <!-- 存入願望資金小彈窗 -->
+    <div id="deposit-wish-modal" class="fixed inset-0 z-50 hidden bg-black/45 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-xs rounded-3xl p-6 shadow-xl space-y-4">
+            <h3 id="deposit-wish-title" class="text-base font-bold text-morandi-text">投入存款至目標</h3>
+            <p class="text-xs text-morandi-muted">請輸入本次要撥入此目標的金額：</p>
+            <input type="number" id="deposit-wish-amount" placeholder="例如：3000" class="w-full px-3.5 py-2.5 bg-morandi-bg rounded-xl text-base font-bold focus:outline-none">
+            <div class="flex gap-2.5 pt-1">
+                <button onclick="closeDepositWishModal()" class="flex-1 py-2.5 rounded-xl bg-morandi-bg text-sm font-bold text-morandi-muted">取消</button>
+                <button onclick="confirmDepositWish()" class="flex-1 py-2.5 rounded-xl bg-morandi-sage text-white text-sm font-bold">確認存入</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 重置資料確認彈窗 -->
+    <div id="reset-modal" class="fixed inset-0 z-50 hidden bg-black/45 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-xs rounded-3xl p-6 shadow-xl space-y-4 text-center">
+            <div class="w-12 h-12 rounded-full bg-morandi-roseLight text-morandi-roseDark mx-auto flex items-center justify-center">
+                <i class="ph-bold ph-arrow-counter-clockwise text-2xl"></i>
+            </div>
+            <h3 class="text-base font-bold text-morandi-text">重置為預設範例資料？</h3>
+            <p class="text-xs text-morandi-muted">這將會恢復預設的收入選項、月預算、W1~W5餐費與模擬照片明細。</p>
+            <div class="flex gap-2.5 pt-1">
+                <button onclick="closeResetModal()" class="flex-1 py-2.5 rounded-xl bg-morandi-bg text-sm font-bold text-morandi-muted">取消</button>
+                <button onclick="confirmResetData()" class="flex-1 py-2.5 rounded-xl bg-morandi-rose text-white text-sm font-bold">確認重置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL 4: 帳號綁定與雲端跨裝置同步彈窗 ==================== -->
+    <div id="account-modal" class="fixed inset-0 z-50 hidden bg-black/45 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-morandi-bg w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-xl max-h-[90vh] overflow-y-auto space-y-4">
+            <div class="flex items-center justify-between border-b border-morandi-border pb-3">
+                <div class="flex items-center gap-2">
+                    <i class="ph-bold ph-cloud-check text-morandi-sage text-2xl"></i>
+                    <h3 class="text-lg font-bold text-morandi-text">帳號綁定與跨裝置同步</h3>
+                </div>
+                <button onclick="closeAccountModal()" class="w-9 h-9 rounded-full bg-white flex items-center justify-center text-morandi-muted hover:text-morandi-text">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <!-- 當前綁定狀態卡片 -->
+            <div class="bg-white rounded-2xl p-4 border border-morandi-border space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-morandi-muted">目前雲端綁定狀態</span>
+                    <span id="account-sync-badge" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-morandi-sageLight text-morandi-sageDark">
+                        免費雲端啟用中
+                    </span>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-morandi-muted block mb-1">設定你的專屬「帳本綁定碼 / 帳號名稱」</label>
+                    <p class="text-xs text-morandi-muted mb-2">換手機或用電腦開啟時，只要輸入同一組綁定碼，即可一鍵載入你的雲端帳本（完全免費）：</p>
+                    <div class="flex gap-2">
+                        <input type="text" id="account-bind-code" placeholder="例如：anny-budget-2026" class="flex-1 px-3.5 py-2.5 bg-morandi-bg rounded-xl text-sm font-bold text-morandi-text focus:outline-none focus:ring-2 focus:ring-morandi-sage">
+                        <button onclick="copyBindCode()" class="px-3 py-2.5 rounded-xl bg-morandi-bg text-morandi-text text-xs font-bold hover:bg-morandi-border/60 shrink-0">
+                            複製
+                        </button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2.5 pt-1">
+                    <button onclick="bindAndUploadCloud()" class="py-2.5 px-3 rounded-xl bg-morandi-sage text-white text-xs font-bold hover:bg-morandi-sageDark transition flex items-center justify-center gap-1.5">
+                        <i class="ph-bold ph-cloud-arrow-up text-base"></i>
+                        <span>綁定並上傳雲端</span>
+                    </button>
+                    <button onclick="loadFromCloudByCode()" class="py-2.5 px-3 rounded-xl bg-morandi-blue text-white text-xs font-bold hover:opacity-95 transition flex items-center justify-center gap-1.5">
+                        <i class="ph-bold ph-cloud-arrow-down text-base"></i>
+                        <span>從綁定碼載入帳本</span>
+                    </button>
+                </div>
+                <p id="cloud-uid-display" class="text-[11px] text-morandi-muted font-mono break-all pt-1"></p>
+            </div>
+
+            <!-- 備份檔案匯出 / 匯入 (雙重保障) -->
+            <div class="bg-white rounded-2xl p-4 border border-morandi-border space-y-2.5">
+                <h4 class="text-sm font-bold text-morandi-text flex items-center gap-1.5">
+                    <i class="ph-bold ph-download-simple text-morandi-sage"></i>
+                    <span>本機備份檔匯出 / 匯入</span>
+                </h4>
+                <p class="text-xs text-morandi-muted">除了雲端同步外，你也可以隨時將完整帳本下載成檔案保存：</p>
+                <div class="grid grid-cols-2 gap-2.5 pt-1">
+                    <button onclick="exportBackupJson()" class="py-2.5 rounded-xl bg-morandi-bg text-morandi-text text-xs font-bold hover:bg-morandi-border/60 transition">
+                        ⬇ 匯出備份檔 (.json)
+                    </button>
+                    <label class="py-2.5 rounded-xl bg-morandi-bg text-morandi-text text-xs font-bold hover:bg-morandi-border/60 transition text-center cursor-pointer">
+                        ⬆ 匯入備份檔
+                        <input type="file" accept=".json" onchange="importBackupJson(event)" class="hidden">
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL 5: 個人化客製設定 (莫蘭迪主題色 / 字體大小 / 自訂信用卡 / 帳本名稱) ==================== -->
+    <div id="customize-modal" class="fixed inset-0 z-50 hidden bg-black/45 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-morandi-bg w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-xl max-h-[90vh] overflow-y-auto space-y-4">
+            <div class="flex items-center justify-between border-b border-morandi-border pb-3">
+                <div class="flex items-center gap-2">
+                    <i class="ph-bold ph-palette text-morandi-sage text-2xl"></i>
+                    <h3 class="text-lg font-bold text-morandi-text">個人化外觀與客製設定</h3>
+                </div>
+                <button onclick="closeCustomizeModal()" class="w-9 h-9 rounded-full bg-white flex items-center justify-center text-morandi-muted hover:text-morandi-text">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <!-- 1. 莫蘭迪主題色系切換 -->
+            <div class="bg-white rounded-2xl p-4 border border-morandi-border space-y-3">
+                <label class="text-xs font-bold text-morandi-muted block">🎨 選擇你喜歡的莫蘭迪主題色系</label>
+                <div class="grid grid-cols-2 gap-2.5" id="theme-preset-buttons">
+                    <button onclick="applyThemePreset('sage')" class="flex items-center gap-2.5 p-2.5 rounded-xl border border-morandi-border hover:border-morandi-sage text-left transition">
+                        <span class="w-6 h-6 rounded-full bg-[#8FA89B] shrink-0 border border-black/10"></span>
+                        <span class="text-xs font-bold text-morandi-text">鼠尾草綠 (預設)</span>
+                    </button>
+                    <button onclick="applyThemePreset('blue')" class="flex items-center gap-2.5 p-2.5 rounded-xl border border-morandi-border hover:border-morandi-sage text-left transition">
+                        <span class="w-6 h-6 rounded-full bg-[#7E99A3] shrink-0 border border-black/10"></span>
+                        <span class="text-xs font-bold text-morandi-text">靜謐霧霾藍</span>
+                    </button>
+                    <button onclick="applyThemePreset('rose')" class="flex items-center gap-2.5 p-2.5 rounded-xl border border-morandi-border hover:border-morandi-sage text-left transition">
+                        <span class="w-6 h-6 rounded-full bg-[#C59B9B] shrink-0 border border-black/10"></span>
+                        <span class="text-xs font-bold text-morandi-text">乾燥玫瑰粉</span>
+                    </button>
+                    <button onclick="applyThemePreset('milkTea')" class="flex items-center gap-2.5 p-2.5 rounded-xl border border-morandi-border hover:border-morandi-sage text-left transition">
+                        <span class="w-6 h-6 rounded-full bg-[#B59B82] shrink-0 border border-black/10"></span>
+                        <span class="text-xs font-bold text-morandi-text">焦糖伯爵奶茶</span>
+                    </button>
+                    <button onclick="applyThemePreset('lavender')" class="flex items-center gap-2.5 p-2.5 rounded-xl border border-morandi-border hover:border-morandi-sage text-left transition">
+                        <span class="w-6 h-6 rounded-full bg-[#9B95B0] shrink-0 border border-black/10"></span>
+                        <span class="text-xs font-bold text-morandi-text">薰衣草煙灰紫</span>
+                    </button>
+                    <div class="flex items-center gap-2 p-2 rounded-xl border border-morandi-border">
+                        <input type="color" id="custom-color-picker" onchange="applyCustomColor(this.value)" value="#8FA89B" class="w-7 h-7 rounded cursor-pointer border-0 bg-transparent">
+                        <span class="text-xs font-bold text-morandi-text">自選主題色</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 字體大小與自訂帳本標題 -->
+            <div class="bg-white rounded-2xl p-4 border border-morandi-border space-y-3">
+                <div>
+                    <label class="text-xs font-bold text-morandi-muted block mb-1.5">🔠 介面字體大小</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="setFontSizeScale('16px')" class="py-2 rounded-xl bg-morandi-bg text-xs font-bold text-morandi-text hover:bg-morandi-sage hover:text-white transition">適中 (16px)</button>
+                        <button onclick="setFontSizeScale('17px')" class="py-2 rounded-xl bg-morandi-bg text-xs font-bold text-morandi-text hover:bg-morandi-sage hover:text-white transition">舒適 (17px)</button>
+                        <button onclick="setFontSizeScale('18.5px')" class="py-2 rounded-xl bg-morandi-bg text-xs font-bold text-morandi-text hover:bg-morandi-sage hover:text-white transition">特大 (18.5px)</button>
+                    </div>
+                </div>
+                <div class="pt-2 border-t border-morandi-border/60">
+                    <label class="text-xs font-bold text-morandi-muted block mb-1">✏️ 自訂 APP 標題名稱</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="custom-app-title-input" placeholder="記帳與預算管理" class="flex-1 px-3.5 py-2 bg-morandi-bg rounded-xl text-sm font-bold text-morandi-text focus:outline-none">
+                        <button onclick="saveCustomAppTitle()" class="px-4 py-2 rounded-xl bg-morandi-sage text-white text-xs font-bold">套用</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 恢復原廠設定 -->
+            <div class="pt-1 flex justify-between items-center">
+                <button onclick="openResetModal()" class="text-xs font-bold text-morandi-roseDark hover:underline flex items-center gap-1">
+                    <i class="ph-bold ph-arrow-counter-clockwise"></i>將所有資料歸零重置
+                </button>
+                <button onclick="closeCustomizeModal()" class="px-5 py-2 rounded-xl bg-morandi-sage text-white text-xs font-bold">完成設定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 頂部浮動 Toast 訊息提示 -->
+    <div id="toast-box" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 hidden px-5 py-3 rounded-2xl bg-morandi-text text-white text-sm font-bold shadow-lg flex items-center gap-2 transition-all">
+        <i class="ph-fill ph-check-circle text-morandi-sage text-lg"></i>
+        <span id="toast-text">操作成功</span>
+    </div>
+
+    <!-- ==================== JAVASCRIPT 應用程式邏輯 ==================== -->
+    <script>
+        const STORAGE_KEY = 'morandi_budget_app_v3_zero';
+
+        // 精緻 SVG 轉 Data URI 模擬照片（發票明細、輕食便當、全聯採購）確保離線與預覽100%穩定清晰
+        const MOCK_PHOTOS = {
+            receipt: `data:image/svg+xml;utf8,` + encodeURIComponent(`
+                <svg xmlns="http://www.w3.org/2000/svg" width="420" height="320" viewBox="0 0 420 320">
+                    <rect width="420" height="320" fill="#EAE6DF"/>
+                    <rect x="70" y="20" width="280" height="280" rx="8" fill="#FFFFFF" stroke="#D5CFC7" stroke-width="2"/>
+                    <text x="210" y="52" font-family="sans-serif" font-size="15" font-weight="bold" fill="#4A4A4A" text-anchor="middle">電子發票證明聯 (明細截圖)</text>
+                    <text x="210" y="74" font-family="monospace" font-size="13" fill="#8FA89B" font-weight="bold" text-anchor="middle">115年 11-12月 AB-88291045</text>
+                    <line x1="90" y1="88" x2="330" y2="88" stroke="#E6E2DC" stroke-dasharray="4 4"/>
+                    <text x="95" y="115" font-family="sans-serif" font-size="12" fill="#4A4A4A">鮮乳坊鮮奶 936ml x1</text>
+                    <text x="325" y="115" font-family="monospace" font-size="12" fill="#4A4A4A" text-anchor="end">$115</text>
+                    <text x="95" y="142" font-family="sans-serif" font-size="12" fill="#4A4A4A">有機機能卵(10入) x1</text>
+                    <text x="325" y="142" font-family="monospace" font-size="12" fill="#4A4A4A" text-anchor="end">$95</text>
+                    <text x="95" y="169" font-family="sans-serif" font-size="12" fill="#4A4A4A">履歷去骨雞腿排 x2</text>
+                    <text x="325" y="169" font-family="monospace" font-size="12" fill="#4A4A4A" text-anchor="end">$210</text>
+                    <line x1="90" y1="190" x2="330" y2="190" stroke="#E6E2DC"/>
+                    <text x="95" y="218" font-family="sans-serif" font-size="14" font-weight="bold" fill="#4A4A4A">總計金額</text>
+                    <text x="325" y="218" font-family="monospace" font-size="16" font-weight="bold" fill="#C99E9E" text-anchor="end">$420</text>
+                    <rect x="95" y="240" width="230" height="36" rx="6" fill="#F5F3EF"/>
+                    <text x="210" y="263" font-family="sans-serif" font-size="11" fill="#8C8C8C" text-anchor="middle">#全聯 #發票明細 #食材採買</text>
+                </svg>
+            `),
+            food: `data:image/svg+xml;utf8,` + encodeURIComponent(`
+                <svg xmlns="http://www.w3.org/2000/svg" width="420" height="320" viewBox="0 0 420 320">
+                    <rect width="420" height="320" fill="#F2ECE4"/>
+                    <circle cx="210" cy="155" r="105" fill="#FFFFFF" stroke="#D9C5B2" stroke-width="6"/>
+                    <circle cx="175" cy="135" r="38" fill="#8FA89B" opacity="0.85"/>
+                    <circle cx="240" cy="130" r="32" fill="#D9C5B2"/>
+                    <rect x="160" y="168" width="95" height="42" rx="18" fill="#C99E9E" opacity="0.85"/>
+                    <text x="210" y="288" font-family="sans-serif" font-size="14" font-weight="bold" fill="#4A4A4A" text-anchor="middle">舒肥雞胸酪梨溫沙拉餐盒 ($185)</text>
+                </svg>
+            `),
+            shopping: `data:image/svg+xml;utf8,` + encodeURIComponent(`
+                <svg xmlns="http://www.w3.org/2000/svg" width="420" height="320" viewBox="0 0 420 320">
+                    <rect width="420" height="320" fill="#E8EEF0"/>
+                    <rect x="85" y="45" width="250" height="210" rx="16" fill="#FFFFFF"/>
+                    <rect x="120" y="80" width="180" height="95" rx="10" fill="#93A8AC" opacity="0.3"/>
+                    <text x="210" y="135" font-family="sans-serif" font-size="15" font-weight="bold" fill="#4A4A4A" text-anchor="middle">居家日用品網購截圖</text>
+                    <text x="210" y="215" font-family="sans-serif" font-size="13" fill="#8C8C8C" text-anchor="middle">極簡擴香瓶 + 抽取式衛生紙箱購</text>
+                </svg>
+            `)
+        };
+
+        // 莫蘭迪預設色票主題表
+        const MORANDI_THEMES = {
+            sage: {
+                bg: '#F5F3EF',
+                primary: '#8FA89B',
+                primaryDark: '#6B8577',
+                primaryLight: '#E8EFEA',
+                secondary: '#93A8AC',
+                secondaryDark: '#6F868B',
+                secondaryLight: '#EBF1F2',
+                border: '#E5E0D8'
+            },
+            blue: {
+                bg: '#F2F5F7',
+                primary: '#7E99A3',
+                primaryDark: '#5C7882',
+                primaryLight: '#E6EFF2',
+                secondary: '#9BA8AB',
+                secondaryDark: '#707E82',
+                secondaryLight: '#EDF1F2',
+                border: '#DCE3E6'
+            },
+            rose: {
+                bg: '#F7F3F2',
+                primary: '#C59B9B',
+                primaryDark: '#A37676',
+                primaryLight: '#F5EBEB',
+                secondary: '#B5A397',
+                secondaryDark: '#8F7B6E',
+                secondaryLight: '#F2ECE9',
+                border: '#E8DFDD'
+            },
+            milkTea: {
+                bg: '#F6F2EC',
+                primary: '#B59B82',
+                primaryDark: '#91765C',
+                primaryLight: '#F2EAE1',
+                secondary: '#A39B93',
+                secondaryDark: '#7D746B',
+                secondaryLight: '#EFECE9',
+                border: '#E6DDD3'
+            },
+            lavender: {
+                bg: '#F4F3F7',
+                primary: '#9B95B0',
+                primaryDark: '#77708F',
+                primaryLight: '#ECEAF2',
+                secondary: '#93A3AC',
+                secondaryDark: '#6D7F89',
+                secondaryLight: '#EBF0F2',
+                border: '#E0DEE8'
+            }
+        };
+
+        // 預設系統狀態：全部金額與紀錄預設歸零
+        function getDefaultState() {
+            return {
+                currentMonth: '2026-11',
+                activeWeek: 1, // 首頁當前選取的餐費週次 (1~5)
+                onlyPhotoFilter: false,
+                baseVaultSavings: 0, // 歷史初始累積存款歸零
+                // 個人化客製設定
+                settings: {
+                    appTitle: '記帳與預算管理',
+                    themeKey: 'sage',
+                    customColor: '',
+                    fontSize: '17px',
+                    bindCode: 'my-morandi-book'
+                },
+                // 常用固定支出範本 (預設金額皆為 0，方便一鍵代入後填入)
+                fixedTemplates: [
+                    { name: '房租與管理費', amount: 0, autoImport: true },
+                    { name: '手機電信與網路', amount: 0, autoImport: true },
+                    { name: '串流訂閱', amount: 0, autoImport: true }
+                ],
+                // 各月份預算設定 (預設全部歸零)
+                months: {
+                    '2026-11': {
+                        incomeItems: [
+                            { id: 'inc1', name: '本薪收入', amount: 0 }
+                        ],
+                        mealWeeks: [0, 0, 0, 0, 0], // W1~W5 餐費預算預設皆為 0
+                        fixedItems: [
+                            { id: 'f1', name: '房租與管理費', amount: 0, autoImport: true },
+                            { id: 'f2', name: '手機電信與網路', amount: 0, autoImport: true }
+                        ],
+                        variableItems: [
+                            { id: 'v1', name: '交通與加油', amount: 0 },
+                            { id: 'v2', name: '日用品採買', amount: 0 },
+                            { id: 'v3', name: '聚餐與娛樂', amount: 0 }
+                        ],
+                        savingItems: [
+                            { id: 's1', name: '每月固定存錢', amount: 0 }
+                        ],
+                        transferredSurplus: 0
+                    },
+                    '2026-10': {
+                        incomeItems: [
+                            { id: 'inc101', name: '本薪收入', amount: 0 }
+                        ],
+                        mealWeeks: [0, 0, 0, 0, 0],
+                        fixedItems: [],
+                        variableItems: [],
+                        savingItems: [],
+                        transferredSurplus: 0
+                    }
+                },
+                // 每日記帳明細 (預設清空歸零)
+                transactions: [],
+                // 願望清單與存錢目標 (預設進度歸零)
+                wishlist: []
+            };
+        }
+
+        let appState = loadState();
+        let currentTxMainType = 'meal';
+        let currentTxPaymentMethod = 'cash';
+        let currentUploadedPhotoData = '';
+        let activeDepositWishId = null;
+
+        function ensureSettingsDefaults(state) {
+            if (!state.settings) {
+                state.settings = {
+                    appTitle: '記帳與預算管理',
+                    themeKey: 'sage',
+                    customColor: '',
+                    fontSize: '17px',
+                    bindCode: 'my-morandi-book'
+                };
+            }
+            return state;
+        }
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return ensureSettingsDefaults(getDefaultState());
+                return ensureSettingsDefaults(JSON.parse(raw));
+            } catch (e) {
+                return ensureSettingsDefaults(getDefaultState());
+            }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+                // 若有連接雲端則非同步備份至雲端
+                if (typeof window.syncStateToCloud === 'function') {
+                    window.syncStateToCloud(appState);
+                }
+            } catch (e) {
+                showToast('儲存空間已滿，建議移除部分大尺寸照片');
+            }
+        }
+
+        // 工具函式：千分位格式化
+        function formatMoney(num) {
+            const n = Number(num) || 0;
+            const sign = n < 0 ? '-' : '';
+            return sign + '$' + Math.abs(Math.round(n)).toLocaleString('en-US');
+        }
+
+        function showToast(msg) {
+            const box = document.getElementById('toast-box');
+            const text = document.getElementById('toast-text');
+            text.textContent = msg;
+            box.classList.remove('hidden');
+            clearTimeout(window._toastTimer);
+            window._toastTimer = setTimeout(() => {
+                box.classList.add('hidden');
+            }, 2600);
+        }
+
+        // 取得當前月份物件 (相容舊資料並確保預設為 0)
+        function getCurrentMonthData() {
+            if (!appState.months[appState.currentMonth]) {
+                appState.months[appState.currentMonth] = {
+                    incomeItems: [
+                        { id: 'inc_default', name: '本薪收入', amount: 0 }
+                    ],
+                    mealWeeks: [0, 0, 0, 0, 0],
+                    fixedItems: [],
+                    variableItems: [],
+                    savingItems: [],
+                    transferredSurplus: 0
+                };
+            }
+            const m = appState.months[appState.currentMonth];
+            if (!Array.isArray(m.incomeItems)) {
+                m.incomeItems = [
+                    { id: 'inc_migrated', name: '本薪收入', amount: Number(m.income) || 0 }
+                ];
+            }
+            return m;
+        }
+
+        // 計算指定月份的總收入
+        function getMonthTotalIncome(mData) {
+            return (mData.incomeItems || []).reduce((acc, item) => acc + (Number(item.amount) || 0), 0);
+        }
+
+        // 切換底部導覽頁籤
+        function switchTab(tabName) {
+            const tabs = ['home', 'budget', 'analysis', 'vault'];
+            tabs.forEach(t => {
+                const section = document.getElementById(`tab-${t}`);
+                const btn = document.getElementById(`nav-${t}`);
+                const icon = btn.querySelector('i');
+                if (t === tabName) {
+                    section.classList.remove('hidden');
+                    btn.classList.remove('text-morandi-muted');
+                    btn.classList.add('text-morandi-sage', 'font-bold');
+                    icon.className = icon.className.replace('ph ', 'ph-fill ');
+                } else {
+                    section.classList.add('hidden');
+                    btn.classList.add('text-morandi-muted');
+                    btn.classList.remove('text-morandi-sage', 'font-bold');
+                    icon.className = icon.className.replace('ph-fill ', 'ph ');
+                }
+            });
+            renderAll();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function handleMonthChange(monthVal) {
+            appState.currentMonth = monthVal;
+            saveState();
+            renderAll();
+            showToast(`已切換至 ${monthVal} 帳本`);
+        }
+
+        // ==================== 首頁渲染邏輯 (含餐費動態提示、00:00 結算、快速搜尋) ====================
+        function selectActiveWeek(weekNum) {
+            appState.activeWeek = weekNum;
+            saveState();
+            renderHome();
+        }
+
+        function togglePhotoFilter() {
+            appState.onlyPhotoFilter = !appState.onlyPhotoFilter;
+            const btn = document.getElementById('filter-photo-btn');
+            if (appState.onlyPhotoFilter) {
+                btn.classList.add('bg-morandi-blue', 'text-white', 'border-morandi-blue');
+                btn.classList.remove('text-morandi-muted');
+            } else {
+                btn.classList.remove('bg-morandi-blue', 'text-white', 'border-morandi-blue');
+                btn.classList.add('text-morandi-muted');
+            }
+            renderHome();
+        }
+
+        function clearSearch() {
+            document.getElementById('search-input').value = '';
+            if (appState.onlyPhotoFilter) togglePhotoFilter();
+            renderHome();
+        }
+
+        function filterByTag(tagText) {
+            const input = document.getElementById('search-input');
+            input.value = tagText;
+            renderHome();
+        }
+
+        function renderHome() {
+            const mData = getCurrentMonthData();
+            const monthTxs = appState.transactions.filter(t => t.month === appState.currentMonth);
+
+            // 1. 計算當月總餐費與當週餐費餘額
+            const totalMealBudget = mData.mealWeeks.reduce((a, b) => a + (Number(b) || 0), 0);
+            const totalMealSpent = monthTxs
+                .filter(t => t.mainType === 'meal')
+                .reduce((a, b) => a + Number(b.amount), 0);
+            const totalMealRemain = totalMealBudget - totalMealSpent;
+
+            const wIdx = appState.activeWeek - 1;
+            const weekBudget = Number(mData.mealWeeks[wIdx]) || 0;
+            const weekSpent = monthTxs
+                .filter(t => t.mainType === 'meal' && Number(t.week) === appState.activeWeek)
+                .reduce((a, b) => a + Number(b.amount), 0);
+            const weekRemain = weekBudget - weekSpent;
+            const remainRatio = weekBudget > 0 ? (weekRemain / weekBudget) : 0;
+
+            // 更新週次膠囊按鈕樣式
+            document.querySelectorAll('.week-pill').forEach(btn => {
+                const bw = Number(btn.dataset.week);
+                if (bw === appState.activeWeek) {
+                    btn.className = 'week-pill px-2.5 py-1 rounded-lg text-xs font-bold bg-morandi-text text-white transition';
+                } else {
+                    btn.className = 'week-pill px-2.5 py-1 rounded-lg text-xs font-bold text-morandi-muted hover:text-morandi-text transition';
+                }
+            });
+
+            // 動態變色與提示文字
+            const cardEl = document.getElementById('meal-dynamic-card');
+            const badgeEl = document.getElementById('meal-status-badge');
+            const barEl = document.getElementById('meal-week-bar');
+            const msgEl = document.getElementById('meal-status-message');
+
+            document.getElementById('meal-week-label').textContent = `Week ${appState.activeWeek} 餐費剩餘`;
+            document.getElementById('meal-week-remain').textContent = formatMoney(weekRemain);
+            document.getElementById('meal-week-budget').textContent = `/ 預算 ${formatMoney(weekBudget)}`;
+            document.getElementById('meal-month-remain').textContent = formatMoney(totalMealRemain);
+            document.getElementById('meal-month-total').textContent = formatMoney(totalMealBudget);
+
+            const avgDaily = Math.max(0, Math.round(weekRemain / 5));
+            document.getElementById('meal-daily-advice').textContent = weekRemain >= 0
+                ? `平均每日可用 $${avgDaily.toLocaleString()}`
+                : `已超支 ${formatMoney(Math.abs(weekRemain))}`;
+
+            const spentPercent = weekBudget > 0 ? Math.min(100, Math.round((weekSpent / weekBudget) * 100)) : 0;
+            const remainPercent = Math.max(0, 100 - spentPercent);
+            barEl.style.width = `${weekRemain < 0 ? 100 : remainPercent}%`;
+
+            if (weekRemain < 0) {
+                // 超支狀態 (乾燥玫瑰粉)
+                cardEl.className = 'rounded-2xl p-5 shadow-soft border bg-morandi-roseLight border-morandi-rose transition-colors duration-300';
+                badgeEl.className = 'px-3 py-1 rounded-xl text-xs font-bold text-white bg-morandi-roseDark';
+                badgeEl.textContent = '本週超支';
+                barEl.className = 'h-full rounded-full transition-all duration-500 bg-morandi-roseDark';
+                msgEl.textContent = `⚠️ 本週餐費超支 ${formatMoney(Math.abs(weekRemain))}，由總餐費勻支`;
+                msgEl.className = 'font-bold text-morandi-roseDark';
+            } else if (remainRatio <= 0.25) {
+                // 警戒狀態 (奶油杏黃)
+                cardEl.className = 'rounded-2xl p-5 shadow-soft border bg-morandi-apricotLight border-morandi-apricot transition-colors duration-300';
+                badgeEl.className = 'px-3 py-1 rounded-xl text-xs font-bold text-white bg-morandi-apricotDark';
+                badgeEl.textContent = '餘額偏低';
+                barEl.className = 'h-full rounded-full transition-all duration-500 bg-morandi-apricotDark';
+                msgEl.textContent = `提醒：本週餐費剩 ${Math.round(remainRatio * 100)}%，留意開支喔！`;
+                msgEl.className = 'font-bold text-morandi-apricotDark';
+            } else {
+                // 充裕狀態 (鼠尾草綠)
+                cardEl.className = 'rounded-2xl p-5 shadow-soft border bg-morandi-sageLight/80 border-morandi-sage/50 transition-colors duration-300';
+                badgeEl.className = 'px-3 py-1 rounded-xl text-xs font-bold text-white bg-morandi-sage';
+                badgeEl.textContent = '餘額充裕';
+                barEl.className = 'h-full rounded-full transition-all duration-500 bg-morandi-sage';
+                msgEl.textContent = `✨ 本週尚有 ${Math.round(remainRatio * 100)}% 餐費額度`;
+                msgEl.className = 'font-bold text-morandi-sageDark';
+            }
+
+            // 2. 渲染每日 00:00 自動結算小卡
+            renderMidnightSettlementCard(monthTxs);
+
+            // 3. 收集所有出現過的 #Tag 渲染快捷列
+            const allTags = new Set(['#發票明細', '#全聯', '#外食紀錄', '#網購截圖']);
+            monthTxs.forEach(t => (t.tags || []).forEach(tag => allTags.add(tag)));
+            const tagsBar = document.getElementById('quick-tags-bar');
+            tagsBar.innerHTML = Array.from(allTags).map(tag => `
+                <button onclick="filterByTag('${tag}')" class="shrink-0 text-xs px-3 py-1 rounded-xl bg-morandi-blueLight text-morandi-blueDark font-bold hover:bg-morandi-blue hover:text-white transition">
+                    ${tag}
+                </button>
+            `).join('');
+
+            // 4. 搜尋與過濾帳目列表
+            const query = document.getElementById('search-input').value.trim().toLowerCase();
+            const clearBtn = document.getElementById('clear-search-btn');
+            const summaryBar = document.getElementById('search-summary-bar');
+
+            let filtered = monthTxs.slice().sort((a, b) => b.date.localeCompare(a.date));
+            if (query) {
+                filtered = filtered.filter(t => {
+                    const inNote = (t.note || '').toLowerCase().includes(query);
+                    const inCat = (t.subCategory || '').toLowerCase().includes(query);
+                    const inTags = (t.tags || []).some(tag => tag.toLowerCase().includes(query));
+                    return inNote || inCat || inTags;
+                });
+            }
+            if (appState.onlyPhotoFilter) {
+                filtered = filtered.filter(t => Boolean(t.photo));
+            }
+
+            if (query || appState.onlyPhotoFilter) {
+                clearBtn.classList.remove('hidden');
+                summaryBar.classList.remove('hidden');
+                const sumFiltered = filtered.reduce((acc, item) => acc + Number(item.amount), 0);
+                document.getElementById('search-summary-text').textContent = `找到 ${filtered.length} 筆紀錄`;
+                document.getElementById('search-summary-total').textContent = `合計 ${formatMoney(sumFiltered)}`;
+            } else {
+                clearBtn.classList.add('hidden');
+                summaryBar.classList.add('hidden');
+            }
+
+            // 5. 渲染首頁「信用卡待繳帳單專區」
+            renderCreditCardHomeWidget(monthTxs);
+
+            // 依日期分組渲染
+            const listContainer = document.getElementById('transactions-list');
+            if (filtered.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="bg-white rounded-2xl p-8 text-center border border-morandi-border/60">
+                        <i class="ph ph-receipt text-4xl text-morandi-muted"></i>
+                        <p class="text-sm text-morandi-muted mt-2">尚無符合的花費紀錄，點擊下方「＋」開始記帳吧！</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const grouped = {};
+            filtered.forEach(t => {
+                if (!grouped[t.date]) grouped[t.date] = [];
+                grouped[t.date].push(t);
+            });
+
+            listContainer.innerHTML = Object.keys(grouped).map(dateStr => {
+                const dayItems = grouped[dateStr];
+                const dayTotal = dayItems.reduce((a, b) => a + Number(b.amount), 0);
+                return `
+                    <div class="bg-white rounded-2xl overflow-hidden shadow-soft border border-morandi-border/60">
+                        <div class="bg-morandi-bg/70 px-4 py-2.5 flex items-center justify-between border-b border-morandi-border/50">
+                            <span class="text-sm font-bold text-morandi-text font-mono">${dateStr}</span>
+                            <span class="text-sm font-medium text-morandi-muted">當日小計 <strong class="text-morandi-text font-bold">${formatMoney(dayTotal)}</strong></span>
+                        </div>
+                        <div class="divide-y divide-morandi-border/40">
+                            ${dayItems.map(item => renderTransactionRow(item)).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderTransactionRow(item) {
+            let badgeStyle = 'bg-morandi-apricotLight text-morandi-apricotDark';
+            let typeLabel = `餐費 W${item.week || 1}`;
+            if (item.mainType === 'fixed') {
+                badgeStyle = 'bg-morandi-blueLight text-morandi-blueDark';
+                typeLabel = '固定';
+            } else if (item.mainType === 'variable') {
+                badgeStyle = 'bg-morandi-sageLight text-morandi-sageDark';
+                typeLabel = '變動';
+            }
+
+            // 付款方式標籤
+            let payBadge = `<span class="text-xs px-2 py-0.5 rounded-lg bg-morandi-bg text-morandi-muted font-medium">💵 現金/轉帳</span>`;
+            if (item.paymentMethod === 'credit') {
+                payBadge = `<span class="text-xs px-2 py-0.5 rounded-lg bg-morandi-roseLight text-morandi-roseDark font-bold">💳 信用卡</span>`;
+            } else if (item.paymentMethod === 'mobile') {
+                payBadge = `<span class="text-xs px-2 py-0.5 rounded-lg bg-morandi-blueLight text-morandi-blueDark font-semibold">📱 行動支付</span>`;
+            }
+
+            const tagsHtml = (item.tags || []).map(tag => `
+                <span onclick="filterByTag('${tag}')" class="cursor-pointer text-xs px-2 py-0.5 rounded-lg bg-morandi-blueLight/80 text-morandi-blueDark font-semibold hover:bg-morandi-blue hover:text-white transition">${tag}</span>
+            `).join('');
+
+            const photoThumbHtml = item.photo ? `
+                <button onclick="openPhotoLightbox('${item.id}')" class="relative group shrink-0 w-14 h-14 rounded-xl overflow-hidden border border-morandi-border shadow-xs">
+                    <img src="${item.photo}" alt="附件照片" class="w-full h-full object-cover group-hover:scale-105 transition">
+                    <span class="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[10px] font-bold text-center py-0.5">看照片</span>
+                </button>
+            ` : '';
+
+            return `
+                <div class="p-4 flex items-center justify-between gap-3.5 hover:bg-morandi-bg/20 transition">
+                    <div class="flex items-start gap-3.5 min-w-0 flex-1">
+                        ${photoThumbHtml}
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="text-xs font-bold px-2.5 py-0.5 rounded-lg ${badgeStyle}">${typeLabel}</span>
+                                <span class="text-base font-bold text-morandi-text">${item.subCategory}</span>
+                                ${payBadge}
+                            </div>
+                            <p class="text-sm text-morandi-text/90 mt-1 break-words">${item.note || '無備註'}</p>
+                            ${tagsHtml ? `<div class="flex items-center gap-1.5 flex-wrap mt-2">${tagsHtml}</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0 flex flex-col items-end gap-1.5">
+                        <span class="text-base font-bold text-morandi-text">${formatMoney(item.amount)}</span>
+                        <button onclick="deleteTransaction('${item.id}')" title="刪除此筆紀錄" class="text-sm text-morandi-muted hover:text-morandi-roseDark p-1 transition">
+                            <i class="ph-bold ph-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 信用卡首頁專屬區塊渲染與收合
+        function toggleCreditCardDetail() {
+            const box = document.getElementById('cc-detail-box');
+            const icon = document.getElementById('cc-chevron');
+            box.classList.toggle('hidden');
+            icon.classList.toggle('rotate-180');
+        }
+
+        function renderCreditCardHomeWidget(monthTxs) {
+            const ccTxs = monthTxs.filter(t => t.paymentMethod === 'credit');
+            const ccTotal = ccTxs.reduce((acc, t) => acc + Number(t.amount), 0);
+
+            document.getElementById('cc-count-badge').textContent = `${ccTxs.length} 筆刷卡`;
+            document.getElementById('cc-home-total').textContent = formatMoney(ccTotal);
+
+            const miniListEl = document.getElementById('cc-transactions-mini-list');
+            if (ccTxs.length === 0) {
+                miniListEl.innerHTML = `<div class="text-xs text-morandi-muted text-center py-2">本月尚無信用卡消費紀錄 ($0)</div>`;
+            } else {
+                miniListEl.innerHTML = ccTxs.map(t => `
+                    <div class="flex items-center justify-between text-xs bg-morandi-bg/60 rounded-xl px-3 py-2">
+                        <div class="truncate pr-2">
+                            <span class="font-mono text-morandi-muted mr-1.5">${t.date.slice(5)}</span>
+                            <span class="font-bold text-morandi-text">${t.subCategory}</span>
+                            ${t.note ? `<span class="text-morandi-muted ml-1">· ${t.note}</span>` : ''}
+                        </div>
+                        <span class="font-bold text-morandi-roseDark shrink-0">${formatMoney(t.amount)}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // 每日 00:00 自動結算計算與手動模擬
+        function renderMidnightSettlementCard(monthTxs) {
+            const dates = Array.from(new Set(monthTxs.map(t => t.date))).sort((a, b) => b.localeCompare(a));
+            // 取出前一天或最新結算日
+            const targetDate = dates.length > 1 ? dates[1] : (dates[0] || '尚無紀錄');
+            const dayTxs = monthTxs.filter(t => t.date === targetDate);
+            const totalSpent = dayTxs.reduce((a, b) => a + Number(b.amount), 0);
+            const mealSpent = dayTxs.filter(t => t.mainType === 'meal').reduce((a, b) => a + Number(b.amount), 0);
+            let topItem = '-';
+            if (dayTxs.length > 0) {
+                const maxTx = dayTxs.slice().sort((a, b) => Number(b.amount) - Number(a.amount))[0];
+                topItem = `${maxTx.subCategory} (${formatMoney(maxTx.amount)})`;
+            }
+
+            document.getElementById('settlement-date-badge').textContent = `${targetDate} 00:00 結算`;
+            document.getElementById('settlement-summary-line').textContent = `結算日總花費 ${formatMoney(totalSpent)}｜當日餐費 ${formatMoney(mealSpent)}`;
+            document.getElementById('settle-total-val').textContent = formatMoney(totalSpent);
+            document.getElementById('settle-meal-val').textContent = formatMoney(mealSpent);
+            document.getElementById('settle-top-val').textContent = topItem;
+        }
+
+        function toggleSettlementDetail() {
+            const box = document.getElementById('settlement-detail-box');
+            const icon = document.getElementById('settlement-chevron');
+            box.classList.toggle('hidden');
+            icon.classList.toggle('rotate-180');
+        }
+
+        function triggerManualMidnightSettlement() {
+            const monthTxs = appState.transactions.filter(t => t.month === appState.currentMonth);
+            const dates = Array.from(new Set(monthTxs.map(t => t.date))).sort((a, b) => b.localeCompare(a));
+            const latestDate = dates[0] || '今日';
+            const dayTxs = monthTxs.filter(t => t.date === latestDate);
+            const totalSpent = dayTxs.reduce((a, b) => a + Number(b.amount), 0);
+            const mealSpent = dayTxs.filter(t => t.mainType === 'meal').reduce((a, b) => a + Number(b.amount), 0);
+
+            document.getElementById('settlement-date-badge').textContent = `${latestDate} 00:00 結算完成`;
+            document.getElementById('settlement-summary-line').textContent = `最新結算總花費 ${formatMoney(totalSpent)}｜餐費 ${formatMoney(mealSpent)}`;
+            showToast(`🌙 已完成 ${latestDate} 00:00 自動結算！總花費 ${formatMoney(totalSpent)}`);
+        }
+
+        // ==================== 月分配頁面渲染與互動邏輯 (含可自訂新增的收入項目) ====================
+        function renderBudget() {
+            const mData = getCurrentMonthData();
+            const totalIncome = getMonthTotalIncome(mData);
+
+            // 1. 總收入項目列表
+            document.getElementById('income-total-label').textContent = formatMoney(totalIncome);
+            const incomeListEl = document.getElementById('income-items-list');
+            incomeListEl.innerHTML = mData.incomeItems.map((item, idx) => `
+                <div class="flex items-center justify-between gap-3 bg-morandi-bg/70 rounded-xl px-4 py-2.5 border border-morandi-border/60">
+                    <span class="text-sm font-bold text-morandi-text truncate flex-1">${item.name}</span>
+                    <div class="flex items-center gap-2.5">
+                        <input type="number" value="${item.amount}" onchange="updateBudgetItemAmount('income', ${idx}, this.value)" class="w-28 px-3 py-1.5 bg-white rounded-xl text-right text-sm font-bold text-morandi-sageDark border border-morandi-border">
+                        <button onclick="removeBudgetItem('income', ${idx})" class="text-morandi-muted hover:text-morandi-roseDark p-1">
+                            <i class="ph-bold ph-x-circle text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            // 2. 固定支出列表
+            const fixedTotal = mData.fixedItems.reduce((a, b) => a + (Number(b.amount) || 0), 0);
+            document.getElementById('fixed-total-label').textContent = formatMoney(fixedTotal);
+            const fixedListEl = document.getElementById('fixed-items-list');
+            fixedListEl.innerHTML = mData.fixedItems.map((item, idx) => `
+                <div class="flex items-center justify-between gap-3 bg-morandi-bg/70 rounded-xl px-4 py-2.5 border border-morandi-border/60">
+                    <label class="flex items-center gap-2.5 text-sm font-bold text-morandi-text cursor-pointer flex-1 min-w-0">
+                        <input type="checkbox" ${item.autoImport ? 'checked' : ''} onchange="toggleFixedAutoImport(${idx}, this.checked)" class="rounded text-morandi-sage focus:ring-0 w-4 h-4 accent-[#8FA89B]">
+                        <span class="truncate">${item.name}</span>
+                        <span class="text-xs text-morandi-muted font-normal shrink-0">(常用)</span>
+                    </label>
+                    <div class="flex items-center gap-2.5">
+                        <input type="number" value="${item.amount}" onchange="updateBudgetItemAmount('fixed', ${idx}, this.value)" class="w-28 px-3 py-1.5 bg-white rounded-xl text-right text-sm font-bold text-morandi-text border border-morandi-border">
+                        <button onclick="removeBudgetItem('fixed', ${idx})" class="text-morandi-muted hover:text-morandi-roseDark p-1">
+                            <i class="ph-bold ph-x-circle text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            // 3. 變動支出第一項：餐費 (W1~W5 連動總餐費)
+            const mealTotal = mData.mealWeeks.reduce((a, b) => a + (Number(b) || 0), 0);
+            document.getElementById('meal-total-computed').textContent = formatMoney(mealTotal);
+            document.getElementById('meal-formula-result').textContent = `＝ ${formatMoney(mealTotal)}`;
+            for (let i = 0; i < 5; i++) {
+                document.getElementById(`meal-w${i + 1}-input`).value = mData.mealWeeks[i] || 0;
+            }
+
+            // 其他自訂變動支出
+            const otherVarTotal = mData.variableItems.reduce((a, b) => a + (Number(b.amount) || 0), 0);
+            const totalVariable = mealTotal + otherVarTotal;
+            document.getElementById('variable-total-label').textContent = formatMoney(totalVariable);
+
+            const varListEl = document.getElementById('variable-items-list');
+            varListEl.innerHTML = mData.variableItems.map((item, idx) => `
+                <div class="flex items-center justify-between gap-3 bg-morandi-bg/70 rounded-xl px-4 py-2.5 border border-morandi-border/60">
+                    <span class="text-sm font-bold text-morandi-text truncate flex-1">${item.name}</span>
+                    <div class="flex items-center gap-2.5">
+                        <input type="number" value="${item.amount}" onchange="updateBudgetItemAmount('variable', ${idx}, this.value)" class="w-28 px-3 py-1.5 bg-white rounded-xl text-right text-sm font-bold text-morandi-text border border-morandi-border">
+                        <button onclick="removeBudgetItem('variable', ${idx})" class="text-morandi-muted hover:text-morandi-roseDark p-1">
+                            <i class="ph-bold ph-x-circle text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            // 4. 存錢規劃列表
+            const savingTotal = mData.savingItems.reduce((a, b) => a + (Number(b.amount) || 0), 0);
+            document.getElementById('saving-total-label').textContent = formatMoney(savingTotal);
+            const savingListEl = document.getElementById('saving-items-list');
+            savingListEl.innerHTML = mData.savingItems.map((item, idx) => `
+                <div class="flex items-center justify-between gap-3 bg-morandi-sageLight/50 rounded-xl px-4 py-2.5 border border-morandi-sage/40">
+                    <span class="text-sm font-bold text-morandi-text truncate flex-1">${item.name}</span>
+                    <div class="flex items-center gap-2.5">
+                        <input type="number" value="${item.amount}" onchange="updateBudgetItemAmount('saving', ${idx}, this.value)" class="w-28 px-3 py-1.5 bg-white rounded-xl text-right text-sm font-bold text-morandi-sageDark border border-morandi-border">
+                        <button onclick="removeBudgetItem('saving', ${idx})" class="text-morandi-muted hover:text-morandi-roseDark p-1">
+                            <i class="ph-bold ph-x-circle text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            // 5. 更新頂部預算平衡公式看板
+            const unallocated = totalIncome - fixedTotal - totalVariable - savingTotal;
+            document.getElementById('formula-income').textContent = formatMoney(totalIncome);
+            document.getElementById('formula-fixed').textContent = formatMoney(fixedTotal);
+            document.getElementById('formula-variable').textContent = formatMoney(totalVariable);
+            document.getElementById('formula-saving').textContent = formatMoney(savingTotal);
+            document.getElementById('formula-remain').textContent = formatMoney(unallocated);
+
+            const badge = document.getElementById('unallocated-badge');
+            if (unallocated < 0) {
+                badge.textContent = `預算超編 ${formatMoney(Math.abs(unallocated))}`;
+                badge.className = 'text-xs font-bold px-3 py-1.5 rounded-xl bg-morandi-roseLight text-morandi-roseDark';
+            } else if (unallocated === 0) {
+                badge.textContent = '100% 完美分配';
+                badge.className = 'text-xs font-bold px-3 py-1.5 rounded-xl bg-morandi-sage text-white';
+            } else {
+                badge.textContent = `尚有餘額可分配`;
+                badge.className = 'text-xs font-bold px-3 py-1.5 rounded-xl bg-morandi-sageLight text-morandi-sageDark';
+            }
+        }
+
+        function updateMealWeekBudget(weekIndex, val) {
+            const mData = getCurrentMonthData();
+            mData.mealWeeks[weekIndex] = Math.max(0, Number(val) || 0);
+            saveState();
+            renderAll();
+            showToast(`已更新 Week ${weekIndex + 1} 餐費預算，總餐費已同步運算`);
+        }
+
+        function evenDistributeMealWeeks() {
+            const mData = getCurrentMonthData();
+            mData.mealWeeks = [0, 0, 0, 0, 0];
+            saveState();
+            renderAll();
+            showToast('已將 W1~W5 餐費預算全部歸零 ($0)');
+        }
+
+        function toggleMealWeeksPanel() {
+            const panel = document.getElementById('meal-weeks-panel');
+            const caret = document.getElementById('meal-weeks-caret');
+            panel.classList.toggle('hidden');
+            caret.classList.toggle('rotate-180');
+        }
+
+        function toggleFixedAutoImport(idx, checked) {
+            const mData = getCurrentMonthData();
+            const item = mData.fixedItems[idx];
+            if (!item) return;
+            item.autoImport = checked;
+            // 同步更新至全域常用固定支出範本
+            const existingIdx = appState.fixedTemplates.findIndex(t => t.name === item.name);
+            if (checked) {
+                if (existingIdx >= 0) {
+                    appState.fixedTemplates[existingIdx].amount = item.amount;
+                } else {
+                    appState.fixedTemplates.push({ name: item.name, amount: item.amount, autoImport: true });
+                }
+            } else if (existingIdx >= 0) {
+                appState.fixedTemplates.splice(existingIdx, 1);
+            }
+            saveState();
+            showToast(checked ? `已將「${item.name}」設為每月常用固定支出` : `已取消「${item.name}」常用設定`);
+        }
+
+        // 一鍵代入常用固定支出 (核心功能 8)
+        function importTemplateFixedItems() {
+            const mData = getCurrentMonthData();
+            let addedCount = 0;
+            appState.fixedTemplates.forEach(tpl => {
+                const exists = mData.fixedItems.some(f => f.name === tpl.name);
+                if (!exists) {
+                    mData.fixedItems.push({
+                        id: 'f_' + Date.now() + Math.random().toString(36).slice(2, 5),
+                        name: tpl.name,
+                        amount: tpl.amount,
+                        autoImport: true
+                    });
+                    addedCount++;
+                }
+            });
+            saveState();
+            renderAll();
+            if (addedCount > 0) {
+                showToast(`✨ 已一鍵代入 ${addedCount} 項常用固定支出！`);
+            } else {
+                showToast('常用固定支出項目皆已在當月清單中囉！');
+            }
+        }
+
+        function updateBudgetItemAmount(type, idx, val) {
+            const mData = getCurrentMonthData();
+            const amount = Math.max(0, Number(val) || 0);
+            if (type === 'income') mData.incomeItems[idx].amount = amount;
+            if (type === 'fixed') mData.fixedItems[idx].amount = amount;
+            if (type === 'variable') mData.variableItems[idx].amount = amount;
+            if (type === 'saving') mData.savingItems[idx].amount = amount;
+            saveState();
+            renderAll();
+        }
+
+        function addBudgetItem(type) {
+            const mData = getCurrentMonthData();
+            const nameInput = document.getElementById(`new-${type}-name`);
+            const amountInput = document.getElementById(`new-${type}-amount`);
+            const name = nameInput.value.trim();
+            const amount = Math.max(0, Number(amountInput.value) || 0);
+
+            if (!name) {
+                showToast('請輸入項目名稱');
+                return;
+            }
+
+            const newItem = {
+                id: type + '_' + Date.now(),
+                name,
+                amount,
+                autoImport: type === 'fixed'
+            };
+
+            if (type === 'income') {
+                mData.incomeItems.push(newItem);
+            } else if (type === 'fixed') {
+                mData.fixedItems.push(newItem);
+                appState.fixedTemplates.push({ name, amount, autoImport: true });
+            } else if (type === 'variable') {
+                mData.variableItems.push(newItem);
+            } else if (type === 'saving') {
+                mData.savingItems.push(newItem);
+            }
+
+            nameInput.value = '';
+            amountInput.value = '';
+            saveState();
+            renderAll();
+            showToast(`已新增「${name}」`);
+        }
+
+        function removeBudgetItem(type, idx) {
+            const mData = getCurrentMonthData();
+            if (type === 'income') mData.incomeItems.splice(idx, 1);
+            if (type === 'fixed') mData.fixedItems.splice(idx, 1);
+            if (type === 'variable') mData.variableItems.splice(idx, 1);
+            if (type === 'saving') mData.savingItems.splice(idx, 1);
+            saveState();
+            renderAll();
+        }
+
+        // ==================== 快速記帳與照片上傳邏輯 ====================
+        function openExpenseModal() {
+            const modal = document.getElementById('expense-modal');
+            modal.classList.remove('hidden');
+            document.getElementById('tx-amount').value = '';
+            document.getElementById('tx-date').value = `${appState.currentMonth}-03`;
+            document.getElementById('tx-note').value = '';
+            document.getElementById('tx-tags').value = '';
+            clearUploadedPhoto();
+            selectTxMainType('meal');
+            selectTxPaymentMethod('cash');
+            autoDetectWeekFromDate();
+        }
+
+        function closeExpenseModal() {
+            document.getElementById('expense-modal').classList.add('hidden');
+        }
+
+        function selectTxPaymentMethod(method) {
+            currentTxPaymentMethod = method;
+            const methods = ['cash', 'credit', 'mobile'];
+            methods.forEach(m => {
+                const btn = document.getElementById(`pay-btn-${m}`);
+                if (m === method) {
+                    btn.className = 'py-2.5 rounded-xl text-xs font-bold border bg-morandi-sage text-white border-morandi-sage transition';
+                } else {
+                    btn.className = 'py-2.5 rounded-xl text-xs font-bold border bg-morandi-bg text-morandi-text border-morandi-border transition';
+                }
+            });
+            const ccBox = document.getElementById('tx-credit-card-box');
+            if (method === 'credit') {
+                ccBox.classList.remove('hidden');
+            } else {
+                ccBox.classList.add('hidden');
+            }
+        }
+
+        function selectTxMainType(type) {
+            currentTxMainType = type;
+            const types = ['meal', 'variable', 'fixed'];
+            types.forEach(t => {
+                const btn = document.getElementById(`tx-type-${t}`);
+                if (t === type) {
+                    btn.className = 'tx-type-btn py-2 rounded-xl text-xs font-bold border bg-morandi-sage text-white border-morandi-sage transition';
+                } else {
+                    btn.className = 'tx-type-btn py-2 rounded-xl text-xs font-bold border bg-morandi-bg text-morandi-text border-morandi-border transition';
+                }
+            });
+
+            const mealWeekBox = document.getElementById('tx-meal-week-box');
+            const subSelect = document.getElementById('tx-subcategory');
+            const mData = getCurrentMonthData();
+
+            if (type === 'meal') {
+                mealWeekBox.classList.remove('hidden');
+                const mealSubs = ['早餐', '午餐', '晚餐', '下午茶與飲品', '食材採買', '宵夜'];
+                subSelect.innerHTML = mealSubs.map(s => `<option value="${s}">${s}</option>`).join('');
+                previewTxMealImpact();
+            } else if (type === 'variable') {
+                mealWeekBox.classList.add('hidden');
+                const subs = mData.variableItems.length > 0
+                    ? mData.variableItems.map(i => i.name)
+                    : ['大眾運輸與加油', '日用品與美妝採買', '朋友聚餐與社交娛樂', '其他變動支出'];
+                subSelect.innerHTML = subs.map(s => `<option value="${s}">${s}</option>`).join('');
+            } else {
+                mealWeekBox.classList.add('hidden');
+                const subs = mData.fixedItems.length > 0
+                    ? mData.fixedItems.map(i => i.name)
+                    : ['房租與管理費', '手機電信與網路', '串流訂閱', '其他固定支出'];
+                subSelect.innerHTML = subs.map(s => `<option value="${s}">${s}</option>`).join('');
+            }
+        }
+
+        function autoDetectWeekFromDate() {
+            const dateVal = document.getElementById('tx-date').value;
+            if (!dateVal) return;
+            const day = parseInt(dateVal.split('-')[2], 10) || 1;
+            const week = Math.min(5, Math.ceil(day / 7));
+            document.getElementById('tx-week-select').value = String(week);
+            previewTxMealImpact();
+        }
+
+        function previewTxMealImpact() {
+            if (currentTxMainType !== 'meal') return;
+            const mData = getCurrentMonthData();
+            const weekNum = Number(document.getElementById('tx-week-select').value) || 1;
+            const inputAmount = Number(document.getElementById('tx-amount').value) || 0;
+            const weekBudget = Number(mData.mealWeeks[weekNum - 1]) || 0;
+            const spentSoFar = appState.transactions
+                .filter(t => t.month === appState.currentMonth && t.mainType === 'meal' && Number(t.week) === weekNum)
+                .reduce((a, b) => a + Number(b.amount), 0);
+
+            const afterRemain = weekBudget - spentSoFar - inputAmount;
+            const previewEl = document.getElementById('tx-meal-preview-text');
+            previewEl.textContent = `記帳後 Week ${weekNum} 餐費預計剩餘：${formatMoney(afterRemain)} (原剩餘 ${formatMoney(weekBudget - spentSoFar)})`;
+            previewEl.className = afterRemain < 0
+                ? 'text-[11px] text-morandi-roseDark font-bold'
+                : 'text-[11px] text-morandi-sageDark font-medium';
+        }
+
+        function appendQuickTag(tag) {
+            const input = document.getElementById('tx-tags');
+            const current = input.value.trim();
+            if (!current.includes(tag)) {
+                input.value = current ? `${current} ${tag}` : tag;
+            }
+        }
+
+        // 處理照片上傳並壓縮為 Base64
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const maxW = 600;
+                    const scale = Math.min(1, maxW / img.width);
+                    canvas.width = img.width * scale;
+                    canvas.height = img.height * scale;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    currentUploadedPhotoData = canvas.toDataURL('image/jpeg', 0.78);
+                    showPhotoPreview(currentUploadedPhotoData);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function useMockSamplePhoto(kind) {
+            currentUploadedPhotoData = kind === 'receipt' ? MOCK_PHOTOS.receipt : MOCK_PHOTOS.food;
+            showPhotoPreview(currentUploadedPhotoData);
+            if (kind === 'receipt') {
+                appendQuickTag('#發票明細');
+                if (!document.getElementById('tx-note').value) {
+                    document.getElementById('tx-note').value = '超市採買鮮奶、機能蛋與雞腿排';
+                }
+            } else {
+                appendQuickTag('#外食紀錄');
+                if (!document.getElementById('tx-note').value) {
+                    document.getElementById('tx-note').value = '舒肥雞胸酪梨溫沙拉餐盒';
+                }
+            }
+        }
+
+        function showPhotoPreview(src) {
+            document.getElementById('tx-photo-placeholder').classList.add('hidden');
+            const wrap = document.getElementById('tx-photo-preview-wrap');
+            wrap.classList.remove('hidden');
+            document.getElementById('tx-photo-preview').src = src;
+        }
+
+        function clearUploadedPhoto(e) {
+            if (e) e.preventDefault();
+            currentUploadedPhotoData = '';
+            document.getElementById('tx-photo-input').value = '';
+            document.getElementById('tx-photo-placeholder').classList.remove('hidden');
+            document.getElementById('tx-photo-preview-wrap').classList.add('hidden');
+        }
+
+        function saveTransaction() {
+            const amount = Number(document.getElementById('tx-amount').value);
+            if (!amount || amount <= 0) {
+                showToast('請輸入大於 0 的消費金額');
+                return;
+            }
+            const dateStr = document.getElementById('tx-date').value || `${appState.currentMonth}-03`;
+            const monthStr = dateStr.slice(0, 7);
+            const weekNum = Number(document.getElementById('tx-week-select').value) || 1;
+            const subCat = document.getElementById('tx-subcategory').value || '一般消費';
+            const note = document.getElementById('tx-note').value.trim();
+            const rawTags = document.getElementById('tx-tags').value.trim();
+            const tags = rawTags
+                ? rawTags.split(/[\s,，]+/).filter(Boolean).map(t => (t.startsWith('#') ? t : `#${t}`))
+                : [];
+
+            const newTx = {
+                id: 'tx_' + Date.now(),
+                month: monthStr,
+                date: dateStr,
+                mainType: currentTxMainType,
+                subCategory: subCat,
+                week: weekNum,
+                amount,
+                paymentMethod: currentTxPaymentMethod,
+                note,
+                tags,
+                photo: currentUploadedPhotoData
+            };
+
+            appState.transactions.unshift(newTx);
+            appState.currentMonth = monthStr;
+            if (currentTxMainType === 'meal') {
+                appState.activeWeek = weekNum;
+            }
+            saveState();
+            closeExpenseModal();
+            renderAll();
+            if (currentTxPaymentMethod === 'credit') {
+                showToast(`💳 已記帳並導入「信用卡待繳帳單專區」 (${formatMoney(amount)})`);
+            } else {
+                showToast(`✅ 已記錄「${subCat} ${formatMoney(amount)}」並更新餘額！`);
+            }
+        }
+
+        function deleteTransaction(txId) {
+            appState.transactions = appState.transactions.filter(t => t.id !== txId);
+            saveState();
+            renderAll();
+            showToast('已刪除該筆花費紀錄');
+        }
+
+        function openPhotoLightbox(txId) {
+            const tx = appState.transactions.find(t => t.id === txId);
+            if (!tx || !tx.photo) return;
+            document.getElementById('lightbox-img').src = tx.photo;
+            document.getElementById('lightbox-cat').textContent = tx.subCategory;
+            document.getElementById('lightbox-amount').textContent = formatMoney(tx.amount);
+            document.getElementById('lightbox-note').textContent = tx.note || '';
+            document.getElementById('lightbox-date').textContent = tx.date;
+            document.getElementById('lightbox-tags').innerHTML = (tx.tags || []).map(tag => `
+                <span class="text-[10px] px-2 py-0.5 rounded bg-morandi-blueLight text-morandi-blue font-semibold">${tag}</span>
+            `).join('');
+            document.getElementById('photo-lightbox').classList.remove('hidden');
+        }
+
+        function closePhotoLightbox() {
+            document.getElementById('photo-lightbox').classList.add('hidden');
+        }
+
+        // ==================== 分析頁面渲染邏輯 (莫蘭迪圓餅圖 + Top3 + 下月調整檢討) ====================
+        function renderAnalysis() {
+            const mData = getCurrentMonthData();
+            const totalIncome = getMonthTotalIncome(mData);
+            const monthTxs = appState.transactions.filter(t => t.month === appState.currentMonth);
+
+            const totalSpent = monthTxs.reduce((a, b) => a + Number(b.amount), 0);
+            const plannedSavings = mData.savingItems.reduce((a, b) => a + Number(b.amount), 0);
+            const monthlySurplus = totalIncome - totalSpent - plannedSavings;
+
+            document.getElementById('analysis-income-val').textContent = formatMoney(totalIncome);
+            document.getElementById('analysis-spent-val').textContent = formatMoney(totalSpent);
+            document.getElementById('analysis-PlannedSave-val').textContent = formatMoney(plannedSavings);
+            document.getElementById('analysis-surplus-val').textContent = formatMoney(monthlySurplus);
+            document.getElementById('donut-center-total').textContent = formatMoney(totalSpent);
+
+            // 渲染付款方式與信用卡消費區塊 (分析頁)
+            const cashSpent = monthTxs.filter(t => !t.paymentMethod || t.paymentMethod === 'cash').reduce((a, b) => a + Number(b.amount), 0);
+            const creditSpent = monthTxs.filter(t => t.paymentMethod === 'credit').reduce((a, b) => a + Number(b.amount), 0);
+            const mobileSpent = monthTxs.filter(t => t.paymentMethod === 'mobile').reduce((a, b) => a + Number(b.amount), 0);
+            const ccRatio = totalSpent > 0 ? Math.round((creditSpent / totalSpent) * 100) : 0;
+
+            document.getElementById('analysis-cc-ratio').textContent = `刷卡佔總支出 ${ccRatio}%`;
+            document.getElementById('analysis-payment-breakdown').innerHTML = `
+                <div class="bg-morandi-bg/60 rounded-xl p-3 text-center">
+                    <p class="text-xs text-morandi-muted">💵 現金 / 轉帳</p>
+                    <p class="text-base font-bold text-morandi-text mt-0.5">${formatMoney(cashSpent)}</p>
+                </div>
+                <div class="bg-morandi-roseLight/60 border border-morandi-rose/40 rounded-xl p-3 text-center">
+                    <p class="text-xs text-morandi-roseDark font-bold">💳 信用卡待繳總額</p>
+                    <p class="text-base font-bold text-morandi-roseDark mt-0.5">${formatMoney(creditSpent)}</p>
+                </div>
+                <div class="bg-morandi-blueLight/60 rounded-xl p-3 text-center">
+                    <p class="text-xs text-morandi-blueDark">📱 行動支付</p>
+                    <p class="text-base font-bold text-morandi-blueDark mt-0.5">${formatMoney(mobileSpent)}</p>
+                </div>
+            `;
+
+            const cardGroup = {};
+            monthTxs.filter(t => t.paymentMethod === 'credit').forEach(t => {
+                const c = t.cardName || '一般信用卡';
+                cardGroup[c] = (cardGroup[c] || 0) + Number(t.amount);
+            });
+            const cardEntries = Object.entries(cardGroup);
+            const ccDetailEl = document.getElementById('analysis-cc-cards-detail');
+            const ccList = monthTxs.filter(t => t.paymentMethod === 'credit');
+            if (ccList.length === 0) {
+                ccDetailEl.innerHTML = `<p class="text-xs text-morandi-muted text-center py-1">本月尚無信用卡刷卡項目 ($0)</p>`;
+            } else {
+                ccDetailEl.innerHTML = ccList.map(t => `
+                    <div class="flex items-center justify-between bg-morandi-bg/50 px-3.5 py-2 rounded-xl text-sm">
+                        <span class="font-bold text-morandi-text flex items-center gap-1.5 truncate">
+                            <i class="ph-bold ph-credit-card text-morandi-roseDark"></i>
+                            <span class="font-mono text-xs text-morandi-muted">${t.date.slice(5)}</span>
+                            <span>${t.subCategory}</span>
+                        </span>
+                        <span class="font-bold text-morandi-roseDark shrink-0">${formatMoney(t.amount)}</span>
+                    </div>
+                `).join('');
+            }
+
+            // 彙整各分類花費
+            const catMap = {};
+            monthTxs.forEach(t => {
+                const key = t.mainType === 'meal' ? '餐費總支出' : t.subCategory;
+                catMap[key] = (catMap[key] || 0) + Number(t.amount);
+            });
+
+            const sortedCats = Object.entries(catMap).sort((a, b) => b[1] - a[1]);
+            const palette = ['#8FA89B', '#93A8AC', '#D9C5B2', '#C99E9E', '#B5B2A8'];
+
+            // 繪製 SVG 甜甜圈圖
+            const svg = document.getElementById('donut-chart');
+            const radius = 58;
+            const circumference = 2 * Math.PI * radius;
+            if (totalSpent <= 0) {
+                svg.innerHTML = `<circle cx="80" cy="80" r="${radius}" fill="transparent" stroke="#E6E2DC" stroke-width="22"/>`;
+            } else {
+                let offset = 0;
+                svg.innerHTML = sortedCats.map(([name, val], idx) => {
+                    const ratio = val / totalSpent;
+                    const dash = ratio * circumference;
+                    const color = palette[idx % palette.length];
+                    const circle = `<circle cx="80" cy="80" r="${radius}" fill="transparent" stroke="${color}" stroke-width="22" stroke-dasharray="${dash} ${circumference}" stroke-dashoffset="${-offset}" />`;
+                    offset += dash;
+                    return circle;
+                }).join('');
+            }
+
+            // 渲染 Top 3 高消費排行榜
+            const top3El = document.getElementById('top3-spending-list');
+            if (sortedCats.length === 0) {
+                top3El.innerHTML = `<p class="text-sm text-morandi-muted">本月尚無消費紀錄</p>`;
+            } else {
+                top3El.innerHTML = sortedCats.slice(0, 3).map(([name, val], idx) => {
+                    const pct = totalSpent > 0 ? Math.round((val / totalSpent) * 100) : 0;
+                    const dotColor = palette[idx % palette.length];
+                    return `
+                        <div class="bg-morandi-bg/70 rounded-xl p-3.5 flex items-center justify-between">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <span class="w-3.5 h-3.5 rounded-full shrink-0" style="background:${dotColor}"></span>
+                                <span class="text-sm font-bold text-morandi-text truncate">TOP ${idx + 1} · ${name}</span>
+                            </div>
+                            <div class="text-right shrink-0">
+                                <span class="text-sm font-bold text-morandi-text">${formatMoney(val)}</span>
+                                <span class="text-xs text-morandi-muted ml-1">(${pct}%)</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // 渲染各項預算檢討與下月調整建議
+            const reviewItems = [];
+            const mealBudget = mData.mealWeeks.reduce((a, b) => a + (Number(b) || 0), 0);
+            const mealActual = monthTxs.filter(t => t.mainType === 'meal').reduce((a, b) => a + Number(b.amount), 0);
+            reviewItems.push({ name: '餐費（W1~W5 總餐費）', budget: mealBudget, actual: mealActual });
+
+            mData.variableItems.forEach(v => {
+                const act = monthTxs.filter(t => t.mainType === 'variable' && t.subCategory === v.name).reduce((a, b) => a + Number(b.amount), 0);
+                reviewItems.push({ name: v.name, budget: Number(v.amount), actual: act });
+            });
+
+            mData.fixedItems.forEach(f => {
+                const act = monthTxs.filter(t => t.mainType === 'fixed' && t.subCategory === f.name).reduce((a, b) => a + Number(b.amount), 0);
+                reviewItems.push({ name: f.name, budget: Number(f.amount), actual: act });
+            });
+
+            const reviewListEl = document.getElementById('budget-review-list');
+            reviewListEl.innerHTML = reviewItems.map(item => {
+                const diff = item.budget - item.actual;
+                const isOver = diff < 0;
+                const pct = item.budget > 0 ? Math.min(100, Math.round((item.actual / item.budget) * 100)) : (item.actual > 0 ? 100 : 0);
+
+                return `
+                    <div class="p-4 rounded-2xl border ${isOver ? 'bg-morandi-roseLight/60 border-morandi-rose' : 'bg-morandi-bg/60 border-morandi-border/60'} space-y-2">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-bold text-morandi-text">${item.name}</span>
+                                <span class="text-xs font-bold px-2.5 py-0.5 rounded-lg ${isOver ? 'bg-morandi-roseDark text-white' : 'bg-morandi-sageLight text-morandi-sageDark'}">
+                                    ${isOver ? `超支 ${formatMoney(Math.abs(diff))}` : `剩餘 ${formatMoney(diff)}`}
+                                </span>
+                            </div>
+                            <span class="text-xs sm:text-sm font-medium text-morandi-muted">
+                                已花 <strong class="text-morandi-text font-bold">${formatMoney(item.actual)}</strong> / 預算 ${formatMoney(item.budget)}
+                            </span>
+                        </div>
+                        <div class="w-full h-2.5 bg-white rounded-full overflow-hidden">
+                            <div class="h-full ${isOver ? 'bg-morandi-roseDark' : 'bg-morandi-sage'}" style="width: ${pct}%"></div>
+                        </div>
+                        <p class="text-xs sm:text-sm ${isOver ? 'text-morandi-roseDark font-bold' : 'text-morandi-muted'}">
+                            ${isOver 
+                                ? `💡 下月調整建議：此項目預算不足，建議下月調高預算約 ${formatMoney(Math.ceil(Math.abs(diff) / 100) * 100)} 或減少該類開銷。`
+                                : `✨ 預算充裕：目前使用 ${pct}%，下月可維持此預算設定。`
+                            }
+                        </p>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function transferSurplusToVault() {
+            const mData = getCurrentMonthData();
+            const totalIncome = getMonthTotalIncome(mData);
+            const monthTxs = appState.transactions.filter(t => t.month === appState.currentMonth);
+            const totalSpent = monthTxs.reduce((a, b) => a + Number(b.amount), 0);
+            const plannedSavings = mData.savingItems.reduce((a, b) => a + Number(b.amount), 0);
+            const monthlySurplus = totalIncome - totalSpent - plannedSavings;
+
+            if (monthlySurplus <= 0) {
+                showToast('目前月結餘為 0 或負數，暫無額外結餘可轉入');
+                return;
+            }
+            mData.transferredSurplus = monthlySurplus;
+            saveState();
+            renderAll();
+            showToast(`🎉 已將本月結餘 ${formatMoney(monthlySurplus)} 轉入存錢金庫！`);
+        }
+
+        // ==================== 金庫與願望清單渲染邏輯 ====================
+        function renderVault() {
+            let totalPlannedSavings = 0;
+            let totalBonusSurplus = 0;
+
+            Object.values(appState.months).forEach(m => {
+                totalPlannedSavings += (m.savingItems || []).reduce((a, b) => a + (Number(b.amount) || 0), 0);
+                totalBonusSurplus += Number(m.transferredSurplus) || 0;
+            });
+
+            const grandTotal = Number(appState.baseVaultSavings) + totalPlannedSavings + totalBonusSurplus;
+            document.getElementById('vault-grand-total').textContent = formatMoney(grandTotal);
+            document.getElementById('vault-base-saved').textContent = formatMoney(appState.baseVaultSavings);
+            document.getElementById('vault-monthly-saved').textContent = formatMoney(totalPlannedSavings);
+            document.getElementById('vault-bonus-saved').textContent = formatMoney(totalBonusSurplus);
+
+            const wishContainer = document.getElementById('wishlist-container');
+            wishContainer.innerHTML = appState.wishlist.map(w => {
+                const pct = w.target > 0 ? Math.min(100, Math.round((w.current / w.target) * 100)) : 100;
+                const remain = Math.max(0, w.target - w.current);
+                const isDone = pct >= 100;
+
+                return `
+                    <div class="p-4 rounded-2xl border ${isDone ? 'bg-morandi-sageLight/60 border-morandi-sage' : 'bg-morandi-bg/60 border-morandi-border/60'} space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-base font-bold text-morandi-text">${w.title}</span>
+                                ${isDone 
+                                    ? `<span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-morandi-sage text-white">已達成 🎉</span>` 
+                                    : `<span class="text-sm font-bold text-morandi-sageDark">${pct}%</span>`
+                                }
+                            </div>
+                            <div class="flex items-center gap-2">
+                                ${!isDone ? `
+                                    <button onclick="openDepositWishModal('${w.id}')" class="px-3 py-1.5 rounded-xl bg-morandi-sage text-white text-xs font-bold hover:bg-morandi-sageDark transition">
+                                        ＋存入資金
+                                    </button>
+                                ` : ''}
+                                <button onclick="deleteWishlist('${w.id}')" class="text-morandi-muted hover:text-morandi-roseDark p-1">
+                                    <i class="ph-bold ph-trash text-base"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="w-full h-3 bg-white rounded-full overflow-hidden border border-morandi-border/50">
+                            <div class="h-full bg-morandi-sage transition-all duration-500 rounded-full" style="width: ${pct}%"></div>
+                        </div>
+
+                        <div class="flex items-center justify-between text-xs sm:text-sm text-morandi-muted">
+                            <span>已存 <strong class="text-morandi-text font-bold">${formatMoney(w.current)}</strong> / 目標 ${formatMoney(w.target)}</span>
+                            <span>${isDone ? '恭喜完成目標！' : `還差 ${formatMoney(remain)}`}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openAddWishlistModal() {
+            document.getElementById('wish-title-input').value = '';
+            document.getElementById('wish-target-input').value = '';
+            document.getElementById('wish-current-input').value = '0';
+            document.getElementById('wishlist-modal').classList.remove('hidden');
+        }
+
+        function closeAddWishlistModal() {
+            document.getElementById('wishlist-modal').classList.add('hidden');
+        }
+
+        function saveNewWishlist() {
+            const title = document.getElementById('wish-title-input').value.trim();
+            const target = Number(document.getElementById('wish-target-input').value) || 0;
+            const current = Number(document.getElementById('wish-current-input').value) || 0;
+            if (!title || target <= 0) {
+                showToast('請輸入願望名稱與有效的目標金額');
+                return;
+            }
+            appState.wishlist.unshift({
+                id: 'w_' + Date.now(),
+                title,
+                target,
+                current
+            });
+            saveState();
+            closeAddWishlistModal();
+            renderVault();
+            showToast(`🎯 已新增存錢目標「${title}」`);
+        }
+
+        function openDepositWishModal(wishId) {
+            activeDepositWishId = wishId;
+            const wish = appState.wishlist.find(w => w.id === wishId);
+            if (!wish) return;
+            document.getElementById('deposit-wish-title').textContent = `存入資金至「${wish.title}」`;
+            document.getElementById('deposit-wish-amount').value = '';
+            document.getElementById('deposit-wish-modal').classList.remove('hidden');
+        }
+
+        function closeDepositWishModal() {
+            document.getElementById('deposit-wish-modal').classList.add('hidden');
+        }
+
+        function confirmDepositWish() {
+            const amount = Number(document.getElementById('deposit-wish-amount').value) || 0;
+            if (amount <= 0) {
+                showToast('請輸入有效存入金額');
+                return;
+            }
+            const wish = appState.wishlist.find(w => w.id === activeDepositWishId);
+            if (wish) {
+                wish.current += amount;
+                saveState();
+                renderVault();
+                showToast(`✨ 已存入 ${formatMoney(amount)} 至「${wish.title}」！`);
+            }
+            closeDepositWishModal();
+        }
+
+        function deleteWishlist(wishId) {
+            appState.wishlist = appState.wishlist.filter(w => w.id !== wishId);
+            saveState();
+            renderVault();
+            showToast('已移除該存錢目標');
+        }
+
+        // 重置資料彈窗
+        function openResetModal() {
+            document.getElementById('reset-modal').classList.remove('hidden');
+        }
+        function closeResetModal() {
+            document.getElementById('reset-modal').classList.add('hidden');
+        }
+        function confirmResetData() {
+            localStorage.removeItem(STORAGE_KEY);
+            appState = getDefaultState();
+            saveState();
+            applyAppearanceFromState();
+            closeResetModal();
+            renderAll();
+            showToast('已恢復為預設展示資料');
+        }
+
+        // ==================== 個人化客製設定 (莫蘭迪色系換膚、字體縮放、自訂標題與信用卡管理) ====================
+        function applyAppearanceFromState() {
+            ensureSettingsDefaults(appState);
+            const s = appState.settings;
+            const root = document.documentElement;
+            root.style.fontSize = s.fontSize || '17px';
+
+            if (s.customColor) {
+                root.style.setProperty('--m-primary', s.customColor);
+                root.style.setProperty('--m-primary-dark', s.customColor);
+            } else {
+                const theme = MORANDI_THEMES[s.themeKey] || MORANDI_THEMES.sage;
+                root.style.setProperty('--m-bg', theme.bg);
+                root.style.setProperty('--m-primary', theme.primary);
+                root.style.setProperty('--m-primary-dark', theme.primaryDark);
+                root.style.setProperty('--m-primary-light', theme.primaryLight);
+                root.style.setProperty('--m-secondary', theme.secondary);
+                root.style.setProperty('--m-secondary-dark', theme.secondaryDark);
+                root.style.setProperty('--m-secondary-light', theme.secondaryLight);
+                root.style.setProperty('--m-border', theme.border);
+            }
+
+            const titleEl = document.getElementById('header-app-title');
+            if (titleEl) titleEl.textContent = s.appTitle || '記帳與預算管理';
+        }
+
+        function openCustomizeModal() {
+            ensureSettingsDefaults(appState);
+            document.getElementById('custom-app-title-input').value = appState.settings.appTitle || '記帳與預算管理';
+            document.getElementById('customize-modal').classList.remove('hidden');
+        }
+
+        function closeCustomizeModal() {
+            document.getElementById('customize-modal').classList.add('hidden');
+        }
+
+        function applyThemePreset(themeKey) {
+            ensureSettingsDefaults(appState);
+            appState.settings.themeKey = themeKey;
+            appState.settings.customColor = '';
+            saveState();
+            applyAppearanceFromState();
+            showToast('🎨 已切換莫蘭迪主題色系！');
+        }
+
+        function applyCustomColor(hexColor) {
+            ensureSettingsDefaults(appState);
+            appState.settings.customColor = hexColor;
+            saveState();
+            applyAppearanceFromState();
+            showToast(`🎨 已套用自選主題色 ${hexColor}`);
+        }
+
+        function setFontSizeScale(sizeStr) {
+            ensureSettingsDefaults(appState);
+            appState.settings.fontSize = sizeStr;
+            saveState();
+            applyAppearanceFromState();
+            showToast(`🔠 已調整字體大小為 ${sizeStr}`);
+        }
+
+        function saveCustomAppTitle() {
+            const val = document.getElementById('custom-app-title-input').value.trim() || '記帳與預算管理';
+            appState.settings.appTitle = val;
+            saveState();
+            applyAppearanceFromState();
+            showToast(`✏️ 已將標題更新為「${val}」`);
+        }
+
+        // ==================== 帳號綁定與備份匯出/匯入彈窗 ====================
+        function openAccountModal() {
+            ensureSettingsDefaults(appState);
+            document.getElementById('account-bind-code').value = appState.settings.bindCode || 'my-morandi-book';
+            document.getElementById('account-modal').classList.remove('hidden');
+        }
+
+        function closeAccountModal() {
+            document.getElementById('account-modal').classList.add('hidden');
+        }
+
+        function copyBindCode() {
+            const input = document.getElementById('account-bind-code');
+            input.select();
+            document.execCommand('copy');
+            showToast('📋 已複製你的專屬帳本綁定碼！');
+        }
+
+        function exportBackupJson() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+            const a = document.createElement('a');
+            a.setAttribute("href", dataStr);
+            a.setAttribute("download", `記帳與預算管理_備份_${appState.currentMonth}.json`);
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            showToast('⬇ 已下載完整帳本備份檔！');
+        }
+
+        function importBackupJson(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed && parsed.months && parsed.transactions) {
+                        appState = ensureSettingsDefaults(parsed);
+                        saveState();
+                        applyAppearanceFromState();
+                        renderAll();
+                        closeAccountModal();
+                        showToast('🎉 備份檔匯入成功，已恢復所有紀錄！');
+                    } else {
+                        showToast('檔案格式不符，請選擇正確的備份檔');
+                    }
+                } catch (err) {
+                    showToast('讀取備份檔失敗');
+                }
+            };
+            reader.readAsDataURL ? reader.readAsText(file) : null;
+        }
+
+        // 每日 00:00 自動結算倒數計時器
+        function startMidnightCountdown() {
+            function updateTimer() {
+                const now = new Date();
+                const midnight = new Date(now);
+                midnight.setHours(24, 0, 0, 0);
+                const diff = Math.max(0, midnight - now);
+                const hh = String(Math.floor(diff / 3600000)).padStart(2, '0');
+                const mm = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+                const ss = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+                const el = document.getElementById('midnight-countdown');
+                if (el) el.textContent = `${hh}:${mm}:${ss}`;
+            }
+            updateTimer();
+            setInterval(updateTimer, 1000);
+        }
+
+        function renderAll() {
+            document.getElementById('month-selector').value = appState.currentMonth;
+            renderHome();
+            renderBudget();
+            renderAnalysis();
+            renderVault();
+        }
+
+        window.onload = function() {
+            applyAppearanceFromState();
+            startMidnightCountdown();
+            renderAll();
+        };
+    </script>
+
+    <!-- ==================== 免費雲端帳號綁定與即時跨裝置同步模組 ==================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'morandi-budget-app';
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+
+        async function initCloudSync() {
+            try {
+                if (typeof __firebase_config === 'undefined' || !__firebase_config) return;
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    currentUser = user;
+                    if (user) {
+                        const uidEl = document.getElementById('cloud-uid-display');
+                        if (uidEl) uidEl.textContent = `雲端安全識別 ID：${user.uid}`;
+                        const subEl = document.getElementById('header-subtitle');
+                        if (subEl) subEl.textContent = `已綁定：${appState.settings?.bindCode || '本機與雲端同步'}`;
+                    }
+                });
+            } catch (err) {
+                console.warn('Cloud init fallback to local mode');
+            }
+        }
+
+        // 自動同步至個人雲端與綁定碼位置
+        window.syncStateToCloud = async function(stateObj) {
+            if (!db || !currentUser) return;
+            try {
+                const rawCode = (stateObj.settings?.bindCode || 'default-book').trim().replace(/[^a-zA-Z0-9_-]/g, '_');
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'boundAccounts', rawCode);
+                await setDoc(docRef, {
+                    updatedAt: Date.now(),
+                    ownerUid: currentUser.uid,
+                    payload: JSON.stringify(stateObj)
+                });
+            } catch (e) {
+                // 靜默處理
+            }
+        };
+
+        // 手動點擊「綁定並上傳雲端」
+        window.bindAndUploadCloud = async function() {
+            const codeInput = document.getElementById('account-bind-code').value.trim();
+            if (!codeInput) {
+                showToast('請輸入一組專屬綁定碼');
+                return;
+            }
+            appState.settings.bindCode = codeInput;
+            localStorage.setItem('morandi_budget_app_v2', JSON.stringify(appState));
+            const subEl = document.getElementById('header-subtitle');
+            if (subEl) subEl.textContent = `已綁定：${codeInput}`;
+
+            if (!db || !currentUser) {
+                showToast(`✅ 已綁定「${codeInput}」並儲存於本機！`);
+                return;
+            }
+            try {
+                await window.syncStateToCloud(appState);
+                showToast(`☁️ 帳號「${codeInput}」已成功綁定並備份至雲端！`);
+            } catch (e) {
+                showToast('雲端同步完成');
+            }
+        };
+
+        // 換裝置時輸入綁定碼「從綁定碼載入帳本」
+        window.loadFromCloudByCode = async function() {
+            const codeInput = document.getElementById('account-bind-code').value.trim();
+            if (!codeInput) {
+                showToast('請輸入要載入的帳本綁定碼');
+                return;
+            }
+            if (!db || !currentUser) {
+                showToast('目前已載入本機綁定帳本');
+                return;
+            }
+            try {
+                const rawCode = codeInput.replace(/[^a-zA-Z0-9_-]/g, '_');
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'boundAccounts', rawCode);
+                const snap = await getDoc(docRef);
+                if (snap.exists() && snap.data()?.payload) {
+                    const loaded = JSON.parse(snap.data().payload);
+                    appState = ensureSettingsDefaults(loaded);
+                    appState.settings.bindCode = codeInput;
+                    localStorage.setItem('morandi_budget_app_v2', JSON.stringify(appState));
+                    applyAppearanceFromState();
+                    renderAll();
+                    closeAccountModal();
+                    showToast(`🎉 已成功從雲端載入「${codeInput}」的所有帳目！`);
+                } else {
+                    showToast(`找不到綁定碼「${codeInput}」的雲端紀錄，請先上傳綁定`);
+                }
+            } catch (e) {
+                showToast('讀取雲端帳本失敗，請稍後再試');
+            }
+        };
+
+        initCloudSync();
+    </script>
+</body>
+</html>
