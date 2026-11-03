@@ -2516,6 +2516,7 @@
         // ==================== 帳號綁定與備份匯出/匯入彈窗 ====================
         function openAccountModal() {
             ensureSettingsDefaults(appState);
+            // 修正：直接讀取 appState.settings.bindCode，確保開啟時顯示當前最新綁定碼
             document.getElementById('account-bind-code').value = appState.settings.bindCode || 'my-morandi-book';
             document.getElementById('account-modal').classList.remove('hidden');
         }
@@ -2660,8 +2661,10 @@
                 showToast('請輸入一組專屬綁定碼');
                 return;
             }
+            // 修正：同時更新記憶體與 settings 物件，並立即呼叫 saveState() 寫入 localStorage
             appState.settings.bindCode = codeInput;
-            localStorage.setItem('morandi_budget_app_v2', JSON.stringify(appState));
+            saveState(); 
+
             const subEl = document.getElementById('header-subtitle');
             if (subEl) subEl.textContent = `已綁定：${codeInput}`;
 
@@ -2684,6 +2687,9 @@
                 showToast('請輸入要載入的帳本綁定碼');
                 return;
             }
+            appState.settings.bindCode = codeInput;
+            saveState();
+
             if (!db || !currentUser) {
                 showToast('目前已載入本機綁定帳本');
                 return;
@@ -2696,7 +2702,7 @@
                     const loaded = JSON.parse(snap.data().payload);
                     appState = ensureSettingsDefaults(loaded);
                     appState.settings.bindCode = codeInput;
-                    localStorage.setItem('morandi_budget_app_v2', JSON.stringify(appState));
+                    saveState();
                     applyAppearanceFromState();
                     renderAll();
                     closeAccountModal();
