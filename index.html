@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>記帳與預算管理 — 莫蘭迪簡約理財</title>
+    <title>記帳與預算管理</title>
     <!-- 網頁標籤 Favicon (莫蘭迪文青圓形小豬理財 Logo) -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Ccircle cx='60' cy='60' r='57' fill='%23F5F3EF' stroke='%238FA89B' stroke-width='3'/%3E%3Cpath d='M32 76 L58 80 L58 92 L30 88 Z' fill='%23FFFFFF' stroke='%234A4A4A' stroke-width='2.2' stroke-linejoin='round'/%3E%3Cpath d='M88 76 L62 80 L62 92 L90 88 Z' fill='%23FFFFFF' stroke='%234A4A4A' stroke-width='2.2' stroke-linejoin='round'/%3E%3Cellipse cx='60' cy='58' rx='21' ry='15' fill='%23C99E9E' stroke='%234A4A4A' stroke-width='2.5'/%3E%3Cellipse cx='38' cy='59' rx='4.5' ry='5.5' fill='%23C99E9E' stroke='%234A4A4A' stroke-width='2.2'/%3E%3Ccircle cx='46' cy='54' r='2' fill='%234A4A4A'/%3E%3Ccircle cx='46' cy='28' r='7' fill='%23D9C5B2' stroke='%234A4A4A' stroke-width='2'/%3E%3Cpath d='M64 38 Q65 24 75 26 Q71 38 64 38 Z' fill='%238FA89B' stroke='%234A4A4A' stroke-width='2'/%3E%3C/svg%3E">
     <!-- Tailwind CSS -->
@@ -94,8 +94,8 @@
 <body class="min-h-screen pb-32 selection:bg-morandi-sage selection:text-white">
 
     <!-- 頂部簡約導覽列 -->
-    <header class="sticky top-0 z-30 bg-morandi-bg/95 backdrop-blur-md border-b border-morandi-border px-4 py-3">
-        <div class="max-w-xl mx-auto flex items-center justify-between gap-2">
+    <header class="sticky top-0 z-30 bg-morandi-bg/95 backdrop-blur-md border-b border-morandi-border px-2.5 sm:px-4 py-3">
+        <div class="max-w-2xl mx-auto flex items-center justify-between gap-2">
             <div class="flex items-center">
                 <div class="w-12 h-12 rounded-full bg-[#F5F3EF] flex items-center justify-center shadow-sm shrink-0 overflow-hidden border border-morandi-sage/50">
                     <svg viewBox="0 0 200 200" class="w-full h-full">
@@ -160,7 +160,7 @@
     </header>
 
     <!-- 主內容容器 -->
-    <main class="max-w-xl mx-auto px-4 pt-5 space-y-5">
+    <main class="max-w-2xl mx-auto px-2.5 sm:px-4 pt-4 space-y-4">
 
         <!-- ==================== TAB 1: 首頁 (總覽與搜尋) ==================== -->
         <section id="tab-home" class="tab-content space-y-5">
@@ -410,7 +410,7 @@
             </div>
 
             <!-- 2. 固定支出設定 -->
-            <div class="bg-white rounded-2xl p-5 shadow-soft border border-morandi-border space-y-4">
+            <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-soft border border-morandi-border space-y-4">
                 <div class="flex items-center justify-between flex-wrap gap-2">
                     <div class="flex items-center gap-2.5">
                         <span class="w-8 h-8 rounded-xl bg-morandi-blueLight text-morandi-blueDark flex items-center justify-center font-bold text-sm">2</span>
@@ -433,8 +433,10 @@
                         ＋新增
                     </button>
                 </div>
+            </div>
+
             <!-- 3. 變動支出設定 (第一項固定為餐費 W1~W5 連動) -->
-            <div class="bg-white rounded-2xl p-5 shadow-soft border border-morandi-border space-y-4">
+            <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-soft border border-morandi-border space-y-4">
                 <div class="flex items-center gap-2.5">
                     <span class="w-8 h-8 rounded-xl bg-morandi-apricotLight text-morandi-apricotDark flex items-center justify-center font-bold text-sm">3</span>
                     <div>
@@ -444,7 +446,7 @@
                 </div>
 
                 <!-- 第一項固定：總餐費預算 & W1~W5 展開面板 -->
-                <div class="rounded-2xl border-2 border-morandi-apricot bg-morandi-apricotLight/35 p-4 space-y-3.5">
+                <div class="rounded-2xl border-2 border-morandi-apricot bg-morandi-apricotLight/35 p-3 sm:p-4 space-y-3">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <span class="text-base font-bold text-morandi-text">🍴 餐費</span>
@@ -456,25 +458,25 @@
                     </div>
 
                     <!-- Week 1 ~ Week 5 輸入網格 -->
-                    <div class="grid grid-cols-5 gap-2 pt-1">
-                        <div class="bg-white p-2.5 rounded-xl border border-morandi-border text-center">
-                            <label class="text-xs font-bold text-morandi-muted block mb-1">Week 1</label>
+                    <div class="grid grid-cols-5 gap-1.5 sm:gap-2 pt-1">
+                        <div class="bg-white py-2 px-1 rounded-xl border border-morandi-border text-center">
+                            <label class="text-[11px] font-bold text-morandi-muted block mb-1 whitespace-nowrap">Week 1</label>
                             <input type="number" id="meal-w1-input" oninput="handleMealWeekInput()" class="w-full text-center font-bold text-sm text-morandi-text focus:outline-none" value="0">
                         </div>
-                        <div class="bg-white p-2.5 rounded-xl border border-morandi-border text-center">
-                            <label class="text-xs font-bold text-morandi-muted block mb-1">Week 2</label>
+                        <div class="bg-white py-2 px-1 rounded-xl border border-morandi-border text-center">
+                            <label class="text-[11px] font-bold text-morandi-muted block mb-1 whitespace-nowrap">Week 2</label>
                             <input type="number" id="meal-w2-input" oninput="handleMealWeekInput()" class="w-full text-center font-bold text-sm text-morandi-text focus:outline-none" value="0">
                         </div>
-                        <div class="bg-white p-2.5 rounded-xl border border-morandi-border text-center">
-                            <label class="text-xs font-bold text-morandi-muted block mb-1">Week 3</label>
+                        <div class="bg-white py-2 px-1 rounded-xl border border-morandi-border text-center">
+                            <label class="text-[11px] font-bold text-morandi-muted block mb-1 whitespace-nowrap">Week 3</label>
                             <input type="number" id="meal-w3-input" oninput="handleMealWeekInput()" class="w-full text-center font-bold text-sm text-morandi-text focus:outline-none" value="0">
                         </div>
-                        <div class="bg-white p-2.5 rounded-xl border border-morandi-border text-center">
-                            <label class="text-xs font-bold text-morandi-muted block mb-1">Week 4</label>
+                        <div class="bg-white py-2 px-1 rounded-xl border border-morandi-border text-center">
+                            <label class="text-[11px] font-bold text-morandi-muted block mb-1 whitespace-nowrap">Week 4</label>
                             <input type="number" id="meal-w4-input" oninput="handleMealWeekInput()" class="w-full text-center font-bold text-sm text-morandi-text focus:outline-none" value="0">
                         </div>
-                        <div class="bg-white p-2.5 rounded-xl border border-morandi-border text-center">
-                            <label class="text-xs font-bold text-morandi-muted block mb-1">Week 5</label>
+                        <div class="bg-white py-2 px-1 rounded-xl border border-morandi-border text-center">
+                            <label class="text-[11px] font-bold text-morandi-muted block mb-1 whitespace-nowrap">Week 5</label>
                             <input type="number" id="meal-w5-input" oninput="handleMealWeekInput()" class="w-full text-center font-bold text-sm text-morandi-text focus:outline-none" value="0">
                         </div>
                     </div>
@@ -642,7 +644,7 @@
 
     <!-- ==================== 固定底部導覽列 ==================== -->
     <nav class="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-morandi-border shadow-nav">
-        <div class="max-w-xl mx-auto px-4 h-20 flex items-center justify-around">
+        <div class="max-w-2xl mx-auto px-2.5 sm:px-4 h-20 flex items-center justify-around">
             <button onclick="switchTab('home')" id="nav-home" class="nav-btn flex flex-col items-center justify-center gap-1 text-morandi-sage font-bold w-16">
                 <i class="ph-fill ph-house text-2xl"></i>
                 <span class="text-xs">首頁</span>
@@ -653,10 +655,10 @@
                 <span class="text-xs">月分配</span>
             </button>
 
-            <!-- 中央突出「＋記帳」按鈕 -->
-            <div class="-mt-7">
-                <button onclick="openAddTransactionModal()" class="w-15 h-15 p-4 rounded-full bg-morandi-sage text-white shadow-lg hover:bg-morandi-sageDark active:scale-95 transition flex items-center justify-center border-4 border-morandi-bg">
-                    <i class="ph-bold ph-plus text-2xl"></i>
+            <!-- 中央突出正圓形「＋記帳」按鈕 -->
+            <div class="-mt-7 flex items-center justify-center">
+                <button onclick="openAddTransactionModal()" class="w-16 h-16 aspect-square shrink-0 rounded-full bg-morandi-sage text-white shadow-lg hover:bg-morandi-sageDark active:scale-95 transition flex items-center justify-center border-4 border-morandi-bg">
+                    <i class="ph-bold ph-plus text-2xl leading-none"></i>
                 </button>
             </div>
 
@@ -738,11 +740,11 @@
                 <div id="tx-week-box" class="bg-morandi-apricotLight/60 p-3.5 rounded-2xl border border-morandi-apricot">
                     <label class="text-xs text-morandi-apricotDark font-bold block mb-1">計入餐費週次</label>
                     <select id="tx-week" class="w-full text-sm font-bold text-morandi-text bg-transparent focus:outline-none">
-                        <option value="1">Week 1 </option>
-                        <option value="2">Week 2 </option>
-                        <option value="3">Week 3 </option>
-                        <option value="4">Week 4 </option>
-                        <option value="5">Week 5 </option>
+                        <option value="1">Week 1 (1~7日)</option>
+                        <option value="2">Week 2 (8~14日)</option>
+                        <option value="3">Week 3 (15~21日)</option>
+                        <option value="4">Week 4 (22~28日)</option>
+                        <option value="5">Week 5 (29~31日)</option>
                     </select>
                 </div>
             </div>
