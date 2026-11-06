@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>記帳與預算管理</title>
+    <title>記帳與預算管理 — 莫蘭迪簡約理財</title>
     <!-- 網頁標籤 Favicon (莫蘭迪文青圓形小豬理財 Logo) -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Ccircle cx='60' cy='60' r='57' fill='%23F5F3EF' stroke='%238FA89B' stroke-width='3'/%3E%3Cpath d='M32 76 L58 80 L58 92 L30 88 Z' fill='%23FFFFFF' stroke='%234A4A4A' stroke-width='2.2' stroke-linejoin='round'/%3E%3Cpath d='M88 76 L62 80 L62 92 L90 88 Z' fill='%23FFFFFF' stroke='%234A4A4A' stroke-width='2.2' stroke-linejoin='round'/%3E%3Cellipse cx='60' cy='58' rx='21' ry='15' fill='%23C99E9E' stroke='%234A4A4A' stroke-width='2.5'/%3E%3Cellipse cx='38' cy='59' rx='4.5' ry='5.5' fill='%23C99E9E' stroke='%234A4A4A' stroke-width='2.2'/%3E%3Ccircle cx='46' cy='54' r='2' fill='%234A4A4A'/%3E%3Ccircle cx='46' cy='28' r='7' fill='%23D9C5B2' stroke='%234A4A4A' stroke-width='2'/%3E%3Cpath d='M64 38 Q65 24 75 26 Q71 38 64 38 Z' fill='%238FA89B' stroke='%234A4A4A' stroke-width='2'/%3E%3C/svg%3E">
     <!-- Tailwind CSS -->
@@ -433,14 +433,12 @@
                         ＋新增
                     </button>
                 </div>
-            </div>
-
             <!-- 3. 變動支出設定 (第一項固定為餐費 W1~W5 連動) -->
             <div class="bg-white rounded-2xl p-5 shadow-soft border border-morandi-border space-y-4">
                 <div class="flex items-center gap-2.5">
                     <span class="w-8 h-8 rounded-xl bg-morandi-apricotLight text-morandi-apricotDark flex items-center justify-center font-bold text-sm">3</span>
                     <div>
-                        <h3 class="text-base font-bold text-morandi-text">變動支出（第一項固定為餐費）</h3>
+                        <h3 class="text-base font-bold text-morandi-text">變動支出</h3>
                         <p class="text-xs text-morandi-muted">調整 Week 1 ~ Week 5 自動加總至總餐費預算</p>
                     </div>
                 </div>
@@ -448,9 +446,8 @@
                 <!-- 第一項固定：總餐費預算 & W1~W5 展開面板 -->
                 <div class="rounded-2xl border-2 border-morandi-apricot bg-morandi-apricotLight/35 p-4 space-y-3.5">
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2.5">
-                            <span class="px-2.5 py-1 rounded-lg bg-morandi-apricot text-white text-xs font-bold">第一項</span>
-                            <span class="text-base font-bold text-morandi-text">🍴 餐費（總餐費運算）</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-base font-bold text-morandi-text">🍴 餐費</span>
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="text-xs text-morandi-muted">總餐費</span>
@@ -716,20 +713,36 @@
                 </div>
             </div>
 
-            <!-- 分類選擇與餐費週次 -->
+            <!-- 主分類選擇 (餐費 / 變動支出 / 固定支出) -->
+            <div class="bg-white p-3.5 rounded-2xl border border-morandi-border space-y-2">
+                <label class="text-xs text-morandi-muted block">主分類選擇</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="button" onclick="selectMainType('meal')" id="main-type-meal" class="py-2 rounded-xl text-xs font-bold border border-morandi-apricotDark bg-morandi-apricotDark text-white transition">
+                        🍴 餐費
+                    </button>
+                    <button type="button" onclick="selectMainType('variable')" id="main-type-variable" class="py-2 rounded-xl text-xs font-bold border border-morandi-border bg-morandi-bg text-morandi-text transition">
+                        🛍️ 變動支出
+                    </button>
+                    <button type="button" onclick="selectMainType('fixed')" id="main-type-fixed" class="py-2 rounded-xl text-xs font-bold border border-morandi-border bg-morandi-bg text-morandi-text transition">
+                        📌 固定支出
+                    </button>
+                </div>
+            </div>
+
+            <!-- 細項分類選擇與餐費週次 -->
             <div class="grid grid-cols-2 gap-3">
                 <div class="bg-white p-3.5 rounded-2xl border border-morandi-border">
-                    <label class="text-xs text-morandi-muted block mb-1">支出分類</label>
+                    <label class="text-xs text-morandi-muted block mb-1">支出細項分類</label>
                     <select id="tx-category" onchange="handleTxCategoryChange()" class="w-full text-sm font-bold text-morandi-text bg-transparent focus:outline-none"></select>
                 </div>
                 <div id="tx-week-box" class="bg-morandi-apricotLight/60 p-3.5 rounded-2xl border border-morandi-apricot">
                     <label class="text-xs text-morandi-apricotDark font-bold block mb-1">計入餐費週次</label>
                     <select id="tx-week" class="w-full text-sm font-bold text-morandi-text bg-transparent focus:outline-none">
-                        <option value="1">Week 1 (1~7日)</option>
-                        <option value="2">Week 2 (8~14日)</option>
-                        <option value="3">Week 3 (15~21日)</option>
-                        <option value="4">Week 4 (22~28日)</option>
-                        <option value="5">Week 5 (29~31日)</option>
+                        <option value="1">Week 1 </option>
+                        <option value="2">Week 2 </option>
+                        <option value="3">Week 3 </option>
+                        <option value="4">Week 4 </option>
+                        <option value="5">Week 5 </option>
                     </select>
                 </div>
             </div>
@@ -1021,6 +1034,7 @@
             uploadedPhotoData: '',
             editingTxId: null, // 若不為 null 代表正在編輯既有花費明細
             selectedPaymentMethod: 'cash',
+            selectedMainType: 'meal',
             settings: {
                 appTitle: '記帳與預算管理',
                 themePreset: 'sage',
@@ -1053,7 +1067,7 @@
                 icon: 'ph-bowl-food',
                 color: 'bg-morandi-apricotLight text-morandi-apricotDark',
                 title: '2. 週一至週日餐費動態餘額提示',
-                desc: '首頁上方會即時追蹤本週餐費餘額，並依照「每週一至週日」自動除以本週剩餘天數（例如週一除以 7、週二除以 6），告訴你平均每天還能花多少錢。'
+                desc: '首頁上方會即時追蹤本週餐費餘額，並依照「每週一至週日」自動除以本週剩餘天數，告訴你平均每天還能花多少錢。'
             },
             {
                 icon: 'ph-pencil-simple-line',
@@ -1913,13 +1927,54 @@
             });
         }
 
-        function populateCategoryDropdown(selectedCatName = '餐費') {
+        function detectMainTypeByCategory(catName) {
+            if (!catName || catName === '餐費') return 'meal';
+            const mData = getMonthData();
+            if (mData.fixedExpenses.some(f => f.name === catName)) return 'fixed';
+            return 'variable';
+        }
+
+        function selectMainType(type, preferredSubCategory = '') {
+            appState.selectedMainType = type;
+            const types = [
+                { key: 'meal', activeClass: 'border-morandi-apricotDark bg-morandi-apricotDark text-white' },
+                { key: 'variable', activeClass: 'border-morandi-sage bg-morandi-sage text-white' },
+                { key: 'fixed', activeClass: 'border-morandi-blue bg-morandi-blue text-white' }
+            ];
+            types.forEach(t => {
+                const btn = document.getElementById(`main-type-${t.key}`);
+                if (!btn) return;
+                if (t.key === type) {
+                    btn.className = `py-2 rounded-xl text-xs font-bold border ${t.activeClass} transition`;
+                } else {
+                    btn.className = 'py-2 rounded-xl text-xs font-bold border border-morandi-border bg-morandi-bg text-morandi-text transition';
+                }
+            });
+            populateCategoryDropdown(preferredSubCategory);
+            handleTxCategoryChange();
+        }
+
+        function populateCategoryDropdown(selectedCatName = '') {
             const mData = getMonthData();
             const select = document.getElementById('tx-category');
-            const options = ['餐費'];
-            mData.variableExpenses.forEach(v => options.push(v.name));
-            mData.fixedExpenses.forEach(f => options.push(f.name));
-            select.innerHTML = options.map(opt => `<option value="${opt}" ${opt === selectedCatName ? 'selected' : ''}>${opt}</option>`).join('');
+            const type = appState.selectedMainType || 'meal';
+            let options = [];
+
+            if (type === 'meal') {
+                options = ['餐費'];
+            } else if (type === 'variable') {
+                options = mData.variableExpenses.map(v => v.name);
+                if (options.length === 0) options = ['一般變動支出'];
+            } else if (type === 'fixed') {
+                options = mData.fixedExpenses.map(f => f.name);
+                if (options.length === 0) options = ['一般固定支出'];
+            }
+
+            if (selectedCatName && !options.includes(selectedCatName)) {
+                options.unshift(selectedCatName);
+            }
+            const target = selectedCatName || options[0] || '餐費';
+            select.innerHTML = options.map(opt => `<option value="${opt}" ${opt === target ? 'selected' : ''}>${opt}</option>`).join('');
         }
 
         function openAddTransactionModal() {
@@ -1927,7 +1982,7 @@
             document.getElementById('tx-modal-title').innerHTML = `<i class="ph-fill ph-Notebook text-morandi-sage"></i> 記錄今日花費`;
             document.getElementById('tx-submit-btn').textContent = '儲存這筆花費';
 
-            populateCategoryDropdown('餐費');
+            selectMainType('meal', '餐費');
 
             const todayStr = getTodayLocalISO();
             document.getElementById('tx-amount').value = '';
@@ -1954,7 +2009,8 @@
             document.getElementById('tx-modal-title').innerHTML = `<i class="ph-fill ph-pencil-simple text-morandi-sage"></i> 編輯花費明細`;
             document.getElementById('tx-submit-btn').textContent = '儲存修改內容';
 
-            populateCategoryDropdown(tx.categoryName);
+            const detectedType = tx.mainType || detectMainTypeByCategory(tx.categoryName);
+            selectMainType(detectedType, tx.categoryName);
 
             document.getElementById('tx-amount').value = tx.amount;
             document.getElementById('tx-date').value = tx.date;
@@ -2059,6 +2115,7 @@
                 if (target) {
                     target.date = date;
                     target.amount = amount;
+                    target.mainType = appState.selectedMainType || detectMainTypeByCategory(categoryName);
                     target.categoryName = categoryName;
                     target.week = week;
                     target.note = note;
@@ -2079,6 +2136,7 @@
                 id: 'tx_' + Date.now(),
                 date,
                 amount,
+                mainType: appState.selectedMainType || detectMainTypeByCategory(categoryName),
                 categoryName,
                 week,
                 note,
@@ -2186,21 +2244,42 @@
             reviewEl.innerHTML = budgetItems.map(item => {
                 const diff = item.budget - item.spent;
                 const isOver = diff < 0;
-                const pct = item.budget > 0 ? Math.min(100, Math.round((item.spent / item.budget) * 100)) : (item.spent > 0 ? 100 : 0);
+                const rawPct = item.budget > 0 ? Math.round((item.spent / item.budget) * 100) : (item.spent > 0 ? 100 : 0);
+                const barWidth = Math.min(100, rawPct);
+
+                let adviceText = '';
+                if (item.budget === 0 && item.spent === 0) {
+                    adviceText = '💡 本月尚未設定預算且無花費，下個月可視需求維持 $0 或新增配置。';
+                } else if (item.budget === 0 && item.spent > 0) {
+                    adviceText = `⚠️ 本月未編列預算但實際花費 ${formatMoney(item.spent)}，建議下個月新增至少 ${formatMoney(item.spent)} 的預算額度。`;
+                } else if (isOver) {
+                    adviceText = `🚨 本月預算不足（已使用 ${rawPct}%，超支 ${formatMoney(Math.abs(diff))}），建議下個月調高「${item.name}」預算至 ${formatMoney(item.spent)} 或減少非必要開支。`;
+                } else if (rawPct >= 85) {
+                    adviceText = `⚡ 本月已使用 ${rawPct}%（剩餘 ${formatMoney(diff)}），預算分配相當精準，下個月建議維持目前預算或微調增加。`;
+                } else {
+                    adviceText = `✅ 本月僅使用 ${rawPct}%（尚有結餘 ${formatMoney(diff)}），控制得宜！下個月可維持原預算，或將多餘額度移至存錢金庫。`;
+                }
+
                 return `
-                    <div class="p-3.5 rounded-xl border ${isOver ? 'bg-morandi-roseLight/60 border-morandi-rose' : 'bg-morandi-bg/50 border-morandi-border'} space-y-2">
-                        <div class="flex items-center justify-between">
+                    <div class="p-4 rounded-2xl border ${isOver ? 'bg-morandi-roseLight/60 border-morandi-rose' : 'bg-morandi-bg/50 border-morandi-border'} space-y-2.5">
+                        <div class="flex items-center justify-between gap-2 flex-wrap">
                             <div class="flex items-center gap-2">
                                 <span class="text-sm font-bold text-morandi-text">${item.name}</span>
                                 <span class="text-xs px-2 py-0.5 rounded-md font-bold ${isOver ? 'bg-morandi-roseDark text-white' : 'bg-morandi-sageLight text-morandi-sageDark'}">
                                     ${isOver ? `預算不足 (超支 ${formatMoney(Math.abs(diff))})` : `剩餘 ${formatMoney(diff)}`}
                                 </span>
                             </div>
-                            <span class="text-xs text-morandi-muted">實支 ${formatMoney(item.spent)} / 預算 ${formatMoney(item.budget)}</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-morandi-muted">實支 ${formatMoney(item.spent)} / 預算 ${formatMoney(item.budget)}</span>
+                                <span class="text-xs font-bold px-2 py-0.5 rounded-md ${isOver ? 'bg-morandi-rose text-white' : 'bg-white text-morandi-text border border-morandi-border'}">${rawPct}%</span>
+                            </div>
                         </div>
-                        <div class="w-full h-2 bg-white rounded-full overflow-hidden">
-                            <div class="h-full ${isOver ? 'bg-morandi-roseDark' : 'bg-morandi-sage'}" style="width:${pct}%"></div>
+                        <div class="w-full h-2.5 bg-white rounded-full overflow-hidden border border-morandi-border/50">
+                            <div class="h-full transition-all duration-500 ${isOver ? 'bg-morandi-roseDark' : (rawPct >= 85 ? 'bg-morandi-apricotDark' : 'bg-morandi-sage')}" style="width:${barWidth}%"></div>
                         </div>
+                        <p class="text-xs leading-relaxed ${isOver ? 'text-morandi-roseDark font-medium' : 'text-morandi-muted'} pt-0.5">
+                            ${adviceText}
+                        </p>
                     </div>
                 `;
             }).join('');
