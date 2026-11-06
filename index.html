@@ -94,9 +94,9 @@
 <body class="min-h-screen pb-32 selection:bg-morandi-sage selection:text-white">
 
     <!-- 頂部簡約導覽列 -->
-    <header class="sticky top-0 z-30 bg-morandi-bg/95 backdrop-blur-md border-b border-morandi-border px-4 py-3.5">
+    <header class="sticky top-0 z-30 bg-morandi-bg/95 backdrop-blur-md border-b border-morandi-border px-4 py-3">
         <div class="max-w-xl mx-auto flex items-center justify-between gap-2">
-            <div class="flex items-center gap-3 min-w-0">
+            <div class="flex items-center">
                 <div class="w-12 h-12 rounded-full bg-[#F5F3EF] flex items-center justify-center shadow-sm shrink-0 overflow-hidden border border-morandi-sage/50">
                     <svg viewBox="0 0 200 200" class="w-full h-full">
                         <defs>
@@ -133,13 +133,7 @@
                         </text>
                     </svg>
                 </div>
-                <div class="min-w-0">
-                    <h1 id="header-app-title" class="text-lg font-bold tracking-tight text-morandi-text truncate">記帳與預算管理</h1>
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full bg-morandi-sage"></span>
-                        <p id="header-subtitle" class="text-xs text-morandi-muted truncate">本機檔案備份保護模式</p>
-                    </div>
-                </div>
+                <span id="header-app-title" class="hidden">記帳與預算管理</span>
             </div>
 
             <div class="flex items-center gap-1.5 shrink-0">
