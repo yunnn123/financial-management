@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>記帳與預算管理</title>
+    <title>記帳與預算管理 — 莫蘭迪簡約理財</title>
     <!-- 網頁標籤 Favicon (莫蘭迪文青圓形小豬理財 Logo) -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Ccircle cx='60' cy='60' r='57' fill='%23F5F3EF' stroke='%238FA89B' stroke-width='3'/%3E%3Cpath d='M32 76 L58 80 L58 92 L30 88 Z' fill='%23FFFFFF' stroke='%234A4A4A' stroke-width='2.2' stroke-linejoin='round'/%3E%3Cpath d='M88 76 L62 80 L62 92 L90 88 Z' fill='%23FFFFFF' stroke='%234A4A4A' stroke-width='2.2' stroke-linejoin='round'/%3E%3Cellipse cx='60' cy='58' rx='21' ry='15' fill='%23C99E9E' stroke='%234A4A4A' stroke-width='2.5'/%3E%3Cellipse cx='38' cy='59' rx='4.5' ry='5.5' fill='%23C99E9E' stroke='%234A4A4A' stroke-width='2.2'/%3E%3Ccircle cx='46' cy='54' r='2' fill='%234A4A4A'/%3E%3Ccircle cx='46' cy='28' r='7' fill='%23D9C5B2' stroke='%234A4A4A' stroke-width='2'/%3E%3Cpath d='M64 38 Q65 24 75 26 Q71 38 64 38 Z' fill='%238FA89B' stroke='%234A4A4A' stroke-width='2'/%3E%3C/svg%3E">
     <!-- Tailwind CSS -->
@@ -213,42 +213,29 @@
                 </div>
             </div>
 
-            <!-- 信用卡待繳帳單專區 -->
-            <div class="bg-white rounded-2xl p-4 shadow-soft border border-morandi-border flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-11 h-11 rounded-2xl bg-morandi-blueLight text-morandi-blueDark flex items-center justify-center shrink-0">
-                        <i class="ph-fill ph-credit-card text-xl"></i>
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <p class="text-sm font-bold text-morandi-text">本月信用卡累計待繳</p>
-                            <span id="home-cc-count-badge" class="text-xs px-2 py-0.5 rounded-md bg-morandi-bg text-morandi-muted font-medium">0 筆</span>
-                        </div>
-                        <p class="text-xs text-morandi-muted mt-0.5">記帳選「信用卡」將自動歸入此帳單區</p>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <p id="home-cc-total" class="text-xl font-bold text-morandi-blueDark">$0</p>
-                    <button onclick="filterByCreditCard()" class="text-xs font-bold text-morandi-sageDark hover:underline">篩選明細</button>
-                </div>
-            </div>
-
             <!-- 每日 00:00 自動結算回顧小卡 -->
-            <div class="bg-white rounded-2xl p-4 shadow-soft border border-morandi-border">
-                <div class="flex items-center justify-between cursor-pointer" onclick="toggleSettlementCard()">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-morandi-apricotLight flex items-center justify-center text-morandi-apricotDark shrink-0">
-                            <i class="ph-fill ph-moon-stars text-xl"></i>
+            <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-soft border border-morandi-border">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-3.5 min-w-0 cursor-pointer flex-1" onclick="toggleSettlementCard()">
+                        <div class="w-12 h-12 rounded-2xl bg-morandi-blueLight/80 flex items-center justify-center text-morandi-blueDark shrink-0">
+                            <i class="ph-bold ph-moon-stars text-2xl"></i>
                         </div>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <h3 class="text-sm font-bold text-morandi-text">昨日 00:00 自動結算回顧</h3>
-                                <span id="settlement-date-label" class="text-xs px-2 py-0.5 rounded-md bg-morandi-bg text-morandi-muted font-medium">--</span>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h3 class="text-base font-bold text-morandi-text">00:00 昨日自動結算</h3>
+                                <span id="settlement-date-label" class="text-xs px-2.5 py-0.5 rounded-full bg-morandi-bg text-morandi-muted font-medium">尚無紀錄 00:00 結算</span>
                             </div>
-                            <p id="settlement-summary-brief" class="text-xs text-morandi-muted mt-0.5">點擊展開結算詳情與倒數計時</p>
+                            <p id="settlement-summary-brief" class="text-sm text-morandi-muted mt-0.5 truncate">結算日總花費 $0｜當日餐費 $0</p>
                         </div>
                     </div>
-                    <i id="settlement-chevron" class="ph-bold ph-caret-down text-morandi-muted text-base transition-transform"></i>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="triggerManualMidnightSettlement()" class="px-3.5 py-2 rounded-2xl bg-morandi-bg hover:bg-morandi-border/60 text-xs font-bold text-morandi-text transition">
+                            模擬結算
+                        </button>
+                        <button onclick="toggleSettlementCard()" class="w-10 h-10 rounded-2xl bg-morandi-bg hover:bg-morandi-border/60 flex items-center justify-center text-morandi-muted transition">
+                            <i id="settlement-chevron" class="ph-bold ph-caret-down text-base transition-transform"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div id="settlement-detail-body" class="hidden mt-4 pt-4 border-t border-morandi-border">
@@ -268,7 +255,45 @@
                     </div>
                     <div class="flex items-center justify-between text-xs text-morandi-muted bg-morandi-bg/40 px-3 py-2 rounded-xl">
                         <span>距離下次 00:00 自動結算：<strong id="midnight-countdown" class="font-mono text-morandi-text">--:--:--</strong></span>
-                        <button onclick="triggerManualMidnightSettlement()" class="text-morandi-sageDark font-bold hover:underline">立即結算今日</button>
+                        <button onclick="triggerManualMidnightSettlement()" class="text-morandi-sageDark font-bold hover:underline">立即更新結算</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 信用卡待繳帳單專區 -->
+            <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-soft border border-morandi-border">
+                <div class="flex items-center justify-between gap-2 cursor-pointer" onclick="toggleCreditCardDetail()">
+                    <div class="flex items-center gap-3.5 min-w-0 flex-1">
+                        <div class="w-12 h-12 rounded-2xl bg-morandi-roseLight flex items-center justify-center text-morandi-roseDark shrink-0">
+                            <i class="ph-bold ph-credit-card text-2xl"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <p class="text-base font-bold text-morandi-text">信用卡待繳帳單專區</p>
+                                <span id="home-cc-count-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-morandi-roseLight text-morandi-roseDark font-bold">0 筆刷卡</span>
+                            </div>
+                            <p class="text-xs sm:text-sm text-morandi-muted mt-0.5 truncate">記帳選「信用卡」之金額會自動導入此處累計</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <div class="text-right">
+                            <span class="text-xs text-morandi-muted block">本月刷卡累計</span>
+                            <p id="home-cc-total" class="text-xl font-bold text-morandi-roseDark leading-tight">$0</p>
+                        </div>
+                        <button type="button" class="w-10 h-10 rounded-2xl bg-morandi-bg hover:bg-morandi-border/60 flex items-center justify-center text-morandi-muted transition">
+                            <i id="cc-chevron" class="ph-bold ph-caret-down text-base transition-transform"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 展開之信用卡明細區塊 -->
+                <div id="home-cc-detail-body" class="hidden mt-4 pt-4 border-t border-morandi-border space-y-2.5">
+                    <div id="home-cc-tx-list" class="space-y-2"></div>
+                    <div class="flex justify-end pt-1">
+                        <button onclick="filterByCreditCard()" class="text-xs font-bold text-morandi-roseDark hover:underline flex items-center gap-1">
+                            <span>在下方搜尋欄篩選全部信用卡明細</span>
+                            <i class="ph-bold ph-arrow-right"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -979,7 +1004,7 @@
                 ],
                 transactions: [],
                 lastSettlement: {
-                    date: getTodayLocalISO(),
+                    date: '尚無紀錄',
                     totalSpent: 0,
                     mealSpent: 0,
                     maxItem: '尚無紀錄'
@@ -1414,7 +1439,31 @@
             const ccTxs = mData.transactions.filter(t => t.paymentMethod === 'credit');
             const total = ccTxs.reduce((s, t) => s + (Number(t.amount) || 0), 0);
             document.getElementById('home-cc-total').textContent = formatMoney(total);
-            document.getElementById('home-cc-count-badge').textContent = `${ccTxs.length} 筆`;
+            document.getElementById('home-cc-count-badge').textContent = `${ccTxs.length} 筆刷卡`;
+
+            const listEl = document.getElementById('home-cc-tx-list');
+            if (!listEl) return;
+            if (ccTxs.length === 0) {
+                listEl.innerHTML = `<p class="text-xs text-morandi-muted text-center py-2">本月尚無信用卡刷卡紀錄</p>`;
+            } else {
+                listEl.innerHTML = ccTxs.slice(0, 5).map(tx => `
+                    <div class="flex items-center justify-between text-xs bg-morandi-bg/60 px-3 py-2 rounded-xl">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="text-morandi-muted font-medium shrink-0">${tx.date.slice(5)}</span>
+                            <span class="font-bold text-morandi-text truncate">${tx.note || tx.categoryName}</span>
+                        </div>
+                        <span class="font-bold text-morandi-roseDark shrink-0">${formatMoney(tx.amount)}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function toggleCreditCardDetail() {
+            const body = document.getElementById('home-cc-detail-body');
+            const chevron = document.getElementById('cc-chevron');
+            if (!body) return;
+            body.classList.toggle('hidden');
+            if (chevron) chevron.classList.toggle('rotate-180');
         }
 
         function filterByCreditCard() {
@@ -1431,12 +1480,13 @@
 
         function renderSettlementCard() {
             const mData = getMonthData();
-            const s = mData.lastSettlement || { date: getTodayLocalISO(), totalSpent: 0, mealSpent: 0, maxItem: '尚無紀錄' };
-            document.getElementById('settlement-date-label').textContent = s.date;
+            const s = mData.lastSettlement || { date: '尚無紀錄', totalSpent: 0, mealSpent: 0, maxItem: '尚無紀錄' };
+            const dateLabel = s.date && s.date !== '尚無紀錄' ? `${s.date} 00:00 結算` : '尚無紀錄 00:00 結算';
+            document.getElementById('settlement-date-label').textContent = dateLabel;
             document.getElementById('settle-total').textContent = formatMoney(s.totalSpent);
             document.getElementById('settle-meal').textContent = formatMoney(s.mealSpent);
             document.getElementById('settle-max').textContent = s.maxItem;
-            document.getElementById('settlement-summary-brief').textContent = `結算總花費 ${formatMoney(s.totalSpent)}（含餐費 ${formatMoney(s.mealSpent)}）`;
+            document.getElementById('settlement-summary-brief').textContent = `結算日總花費 ${formatMoney(s.totalSpent)}｜當日餐費 ${formatMoney(s.mealSpent)}`;
         }
 
         function triggerManualMidnightSettlement() {
