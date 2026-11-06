@@ -1387,15 +1387,22 @@
             return Object.values(mData.mealWeeks).reduce((sum, v) => sum + (Number(v) || 0), 0);
         }
 
+        const MEAL_SUB_CATEGORIES = ['早餐', '午餐', '晚餐', '下午茶/點心', '飲料', '其他'];
+
+        function isMealTransaction(tx) {
+            if (!tx) return false;
+            return tx.mainType === 'meal' || tx.categoryName === '餐費' || MEAL_SUB_CATEGORIES.includes(tx.categoryName);
+        }
+
         function getMealSpentByWeek(mData, weekNum) {
             return mData.transactions
-                .filter(tx => tx.categoryName === '餐費' && Number(tx.week) === Number(weekNum))
+                .filter(tx => isMealTransaction(tx) && Number(tx.week) === Number(weekNum))
                 .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
         }
 
         function getTotalMealSpent(mData) {
             return mData.transactions
-                .filter(tx => tx.categoryName === '餐費')
+                .filter(tx => isMealTransaction(tx))
                 .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
         }
 
@@ -1531,7 +1538,7 @@
             const latestDate = mData.transactions.length > 0 ? mData.transactions[0].date : getTodayLocalISO();
             const dayTxs = mData.transactions.filter(tx => tx.date === latestDate);
             const totalSpent = dayTxs.reduce((sum, tx) => sum + Number(tx.amount), 0);
-            const mealSpent = dayTxs.filter(tx => tx.categoryName === '餐費').reduce((sum, tx) => sum + Number(tx.amount), 0);
+            const mealSpent = dayTxs.filter(tx => isMealTransaction(tx)).reduce((sum, tx) => sum + Number(tx.amount), 0);
             
             let maxItem = '無花費';
             if (dayTxs.length > 0) {
@@ -1689,7 +1696,7 @@
                                             <div class="flex items-center gap-1.5 flex-wrap">
                                                 <span class="text-sm font-bold text-morandi-text truncate">${tx.note || tx.categoryName}</span>
                                                 <span class="text-xs px-2 py-0.5 rounded-md bg-morandi-bg text-morandi-muted font-medium">
-                                                    ${tx.categoryName}${tx.categoryName === '餐費' ? `・W${tx.week}` : ''}
+                                                    ${tx.categoryName}${isMealTransaction(tx) ? `・W${tx.week}` : ''}
                                                 </span>
                                                 ${getPaymentBadgeHtml(tx)}
                                             </div>
@@ -1951,7 +1958,7 @@
         }
 
         function detectMainTypeByCategory(catName) {
-            if (!catName || catName === '餐費') return 'meal';
+            if (!catName || catName === '餐費' || MEAL_SUB_CATEGORIES.includes(catName)) return 'meal';
             const mData = getMonthData();
             if (mData.fixedExpenses.some(f => f.name === catName)) return 'fixed';
             return 'variable';
@@ -1984,7 +1991,7 @@
             let options = [];
 
             if (type === 'meal') {
-                options = ['餐費'];
+                options = [...MEAL_SUB_CATEGORIES];
             } else if (type === 'variable') {
                 options = mData.variableExpenses.map(v => v.name);
                 if (options.length === 0) options = ['一般變動支出'];
@@ -1996,7 +2003,7 @@
             if (selectedCatName && !options.includes(selectedCatName)) {
                 options.unshift(selectedCatName);
             }
-            const target = selectedCatName || options[0] || '餐費';
+            const target = selectedCatName || options[0] || '早餐';
             select.innerHTML = options.map(opt => `<option value="${opt}" ${opt === target ? 'selected' : ''}>${opt}</option>`).join('');
         }
 
@@ -2037,7 +2044,7 @@
             document.getElementById('tx-modal-title').innerHTML = `<i class="ph-fill ph-Notebook text-morandi-sage"></i> 記錄今日花費`;
             document.getElementById('tx-submit-btn').textContent = '儲存這筆花費';
 
-            selectMainType('meal', '餐費');
+            selectMainType('meal', '早餐');
 
             const todayStr = getTodayLocalISO();
             document.getElementById('tx-amount').value = '';
@@ -2105,7 +2112,7 @@
         function handleTxCategoryChange() {
             const cat = document.getElementById('tx-category').value;
             const weekBox = document.getElementById('tx-week-box');
-            if (cat === '餐費') {
+            if (appState.selectedMainType === 'meal' || cat === '餐費' || MEAL_SUB_CATEGORIES.includes(cat)) {
                 weekBox.classList.remove('opacity-40', 'pointer-events-none');
             } else {
                 weekBox.classList.add('opacity-40', 'pointer-events-none');
@@ -2180,7 +2187,9 @@
                     target.photo = appState.uploadedPhotoData || '';
                     target.paymentMethod = paymentMethod;
                 }
-                if (categoryName === '餐費') appState.activeWeek = week;
+                if (appState.selectedMainType === 'meal' || categoryName === '餐費' || MEAL_SUB_CATEGORIES.includes(categoryName)) {
+                    appState.activeWeek = week;
+                }
                 saveState();
                 closeAddTransactionModal();
                 renderAll();
@@ -2203,7 +2212,7 @@
                 cardName: paymentMethod === 'credit' ? '信用卡' : ''
             });
 
-            if (categoryName === '餐費') {
+            if (appState.selectedMainType === 'meal' || categoryName === '餐費' || MEAL_SUB_CATEGORIES.includes(categoryName)) {
                 appState.activeWeek = week;
             }
 
@@ -2292,7 +2301,7 @@
             }
 
             const budgetItems = [
-                { name: '餐費', budget: getTotalMealBudget(mData), spent: catTotals['餐費'] || 0 },
+                { name: '餐費', budget: getTotalMealBudget(mData), spent: getTotalMealSpent(mData) },
                 ...mData.variableExpenses.map(v => ({ name: v.name, budget: Number(v.amount) || 0, spent: catTotals[v.name] || 0 })),
                 ...mData.fixedExpenses.map(f => ({ name: f.name, budget: Number(f.amount) || 0, spent: catTotals[f.name] || 0 }))
             ];
