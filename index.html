@@ -89,6 +89,18 @@
             -webkit-appearance: none;
             margin: 0;
         }
+        /* 讓透明日期選擇器完整覆蓋消費日期框，確保手機與電腦點擊皆可彈出月曆 */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="min-h-screen pb-32 selection:bg-morandi-sage selection:text-white">
@@ -687,19 +699,22 @@
                 </button>
             </div>
 
-            <!-- 金額與日期 -->
+            <!-- 金額與消費日期 (純白底、左側 yyyy-mm-dd、右側日曆圖示點擊展開月曆) -->
             <div class="grid grid-cols-2 gap-3">
                 <div class="bg-white p-3.5 rounded-2xl border border-morandi-border">
                     <label class="text-xs text-morandi-muted block mb-1">消費金額 ($)</label>
-                    <input type="number" id="tx-amount" placeholder="0" class="w-full text-2xl font-bold text-morandi-text focus:outline-none">
+                    <input type="number" id="tx-amount" placeholder="0" class="w-full text-2xl font-bold text-morandi-text bg-white focus:outline-none">
                 </div>
-                <div class="bg-white p-3.5 rounded-2xl border border-morandi-border relative cursor-pointer" onclick="document.getElementById('tx-date').showPicker?.()">
+                <div class="bg-white p-3.5 rounded-2xl border border-morandi-border relative cursor-pointer select-none" onclick="openDatePicker()">
                     <label class="text-xs text-morandi-muted block mb-1">消費日期</label>
-                    <div class="flex items-center justify-between mt-1">
-                        <span id="tx-date-display" class="text-base sm:text-lg font-bold text-morandi-text tracking-tight">--/--/--</span>
-                        <i class="ph-bold ph-calendar text-morandi-muted text-lg"></i>
+                    <div class="flex items-center justify-between mt-1 bg-white">
+                        <span id="tx-date-display" class="text-base sm:text-lg font-bold text-morandi-text tracking-tight">yyyy-mm-dd</span>
+                        <i class="ph-bold ph-calendar-blank text-morandi-text text-lg shrink-0"></i>
                     </div>
-                    <input type="date" id="tx-date" onchange="syncDateDisplay(this.value); autoDetectWeekFromDate()" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer">
+                    <input type="date" id="tx-date" 
+                        oninput="syncDateDisplay(this.value); autoDetectWeekFromDate()" 
+                        onchange="syncDateDisplay(this.value); autoDetectWeekFromDate()" 
+                        class="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10 bg-white">
                 </div>
             </div>
 
@@ -1041,6 +1056,7 @@
             editingTxId: null, // 若不為 null 代表正在編輯既有花費明細
             selectedPaymentMethod: 'cash',
             selectedMainType: 'meal',
+            lastKnownToday: getTodayLocalISO(),
             settings: {
                 appTitle: '記帳與預算管理',
                 themePreset: 'sage',
@@ -1101,6 +1117,7 @@
                 }
                 parsed.activeWeek = getWeekFromDateStr(getTodayLocalISO());
                 parsed.editingTxId = null;
+                parsed.lastKnownToday = getTodayLocalISO();
                 return parsed;
             } catch (e) {
                 return JSON.parse(JSON.stringify(DEFAULT_STATE));
@@ -1983,6 +2000,38 @@
             select.innerHTML = options.map(opt => `<option value="${opt}" ${opt === target ? 'selected' : ''}>${opt}</option>`).join('');
         }
 
+        // 同步將消費日期顯示為 yyyy-mm-dd 格式
+        function syncDateDisplay(dateVal) {
+            const displayEl = document.getElementById('tx-date-display');
+            const dateInput = document.getElementById('tx-date');
+            const finalDate = (dateVal && String(dateVal).trim() !== '') ? String(dateVal).trim() : getTodayLocalISO();
+            if (dateInput && dateInput.value !== finalDate) {
+                dateInput.value = finalDate;
+            }
+            if (displayEl) {
+                displayEl.textContent = finalDate.replace(/\//g, '-');
+            }
+        }
+
+        // 點擊消費日期框時展開月曆選擇器
+        function openDatePicker() {
+            const dateInput = document.getElementById('tx-date');
+            if (!dateInput) return;
+            if (!dateInput.value) {
+                syncDateDisplay(getTodayLocalISO());
+            }
+            try {
+                if (typeof dateInput.showPicker === 'function') {
+                    dateInput.showPicker();
+                } else {
+                    dateInput.focus();
+                    dateInput.click();
+                }
+            } catch (e) {
+                dateInput.focus();
+            }
+        }
+
         function openAddTransactionModal() {
             appState.editingTxId = null;
             document.getElementById('tx-modal-title').innerHTML = `<i class="ph-fill ph-Notebook text-morandi-sage"></i> 記錄今日花費`;
@@ -1993,6 +2042,7 @@
             const todayStr = getTodayLocalISO();
             document.getElementById('tx-amount').value = '';
             document.getElementById('tx-date').value = todayStr;
+            syncDateDisplay(todayStr);
             document.getElementById('tx-note').value = '';
             document.getElementById('tx-tags').value = '';
             clearUploadedPhoto();
@@ -2020,6 +2070,7 @@
 
             document.getElementById('tx-amount').value = tx.amount;
             document.getElementById('tx-date').value = tx.date;
+            syncDateDisplay(tx.date);
             document.getElementById('tx-note').value = tx.note || '';
             document.getElementById('tx-tags').value = (tx.tags || []).join(' ');
             selectPaymentMethod(tx.paymentMethod || 'cash');
@@ -2405,7 +2456,7 @@
             showToast('已移除該願望項目');
         }
 
-        // ==================== 每日 00:00 自動結算倒數計時器 ====================
+        // ==================== 每日 00:00 自動結算與跨日日期自動推進 ====================
         function startMidnightCountdown() {
             function updateClock() {
                 const now = new Date();
@@ -2421,6 +2472,18 @@
 
                 if (diff <= 1000) {
                     triggerManualMidnightSettlement();
+                }
+
+                // 檢查是否跨日 (00:00 一到自動推進預設消費日期為新的一天)
+                const currentToday = getTodayLocalISO();
+                if (currentToday !== appState.lastKnownToday) {
+                    appState.lastKnownToday = currentToday;
+                    appState.activeWeek = getWeekFromDateStr(currentToday);
+                    if (!appState.editingTxId) {
+                        syncDateDisplay(currentToday);
+                        autoDetectWeekFromDate();
+                    }
+                    renderAll();
                 }
             }
             updateClock();
@@ -2451,6 +2514,7 @@
 
         window.onload = function() {
             applySavedAppearance();
+            syncDateDisplay(getTodayLocalISO());
             renderAll();
             startMidnightCountdown();
 
