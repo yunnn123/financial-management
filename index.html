@@ -1387,11 +1387,11 @@
             return Object.values(mData.mealWeeks).reduce((sum, v) => sum + (Number(v) || 0), 0);
         }
 
-        const MEAL_SUB_CATEGORIES = ['早餐', '午餐', '晚餐', '下午茶/點心', '飲料', '其他'];
+        const MEAL_SUB_CATEGORIES = ['早餐', '午餐', '晚餐', '點心', '宵夜', '飲料', '其他'];
 
         function isMealTransaction(tx) {
             if (!tx) return false;
-            return tx.mainType === 'meal' || tx.categoryName === '餐費' || MEAL_SUB_CATEGORIES.includes(tx.categoryName);
+            return tx.mainType === 'meal' || tx.categoryName === '餐費' || tx.categoryName === '下午茶/點心' || MEAL_SUB_CATEGORIES.includes(tx.categoryName);
         }
 
         function getMealSpentByWeek(mData, weekNum) {
