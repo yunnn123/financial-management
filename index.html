@@ -401,9 +401,9 @@
                 <div id="income-items-list" class="space-y-2.5"></div>
 
                 <div class="pt-2 flex gap-2">
-                    <input type="text" id="new-income-name" placeholder="新增收入（如：本薪、兼職、股息）" class="flex-1 px-3.5 py-2 text-sm bg-morandi-bg rounded-xl border border-morandi-border focus:outline-none">
-                    <input type="number" id="new-income-amount" placeholder="金額" class="w-28 px-3 py-2 text-sm bg-morandi-bg rounded-xl border border-morandi-border focus:outline-none">
-                    <button onclick="addCustomBudgetItem('income')" class="px-4 py-2 bg-morandi-sage text-white rounded-xl text-sm font-bold hover:bg-morandi-sageDark transition shrink-0">
+                    <input type="text" id="new-income-name" placeholder="新增收入（如：本薪、兼職）" class="flex-1 min-w-0 px-3 py-2 text-sm bg-morandi-bg rounded-xl border border-morandi-border focus:outline-none">
+                    <input type="number" id="new-income-amount" placeholder="金額" class="w-20 px-2.5 py-2 text-sm bg-morandi-bg rounded-xl border border-morandi-border focus:outline-none shrink-0">
+                    <button onclick="addCustomBudgetItem('income')" class="px-3.5 py-2 bg-morandi-sage text-white rounded-xl text-sm font-bold hover:bg-morandi-sageDark transition shrink-0">
                         ＋新增
                     </button>
                 </div>
@@ -416,7 +416,7 @@
                         <span class="w-8 h-8 rounded-xl bg-morandi-blueLight text-morandi-blueDark flex items-center justify-center font-bold text-sm">2</span>
                         <div>
                             <h3 class="text-base font-bold text-morandi-text">固定支出</h3>
-                            <p class="text-xs text-morandi-muted">勾選「常用」即可每月一鍵代入預設金額</p>
+                            <p class="text-xs text-morandi-muted">勾選項目即可每月一鍵代入預設金額</p>
                         </div>
                     </div>
                     <button onclick="oneClickImportFixedExpenses()" class="px-3.5 py-2 rounded-xl bg-morandi-blue text-white text-xs font-bold hover:bg-morandi-blueDark transition flex items-center gap-1.5 shadow-xs">
@@ -427,9 +427,9 @@
                 <div id="fixed-expense-list" class="space-y-2.5"></div>
 
                 <div class="pt-2 flex gap-2">
-                    <input type="text" id="new-fixed-name" placeholder="新增固定支出（如：房租、電話費）" class="flex-1 px-3.5 py-2 text-sm bg-morandi-bg rounded-xl border border-morandi-border focus:outline-none">
-                    <input type="number" id="new-fixed-amount" placeholder="金額" class="w-28 px-3 py-2 text-sm bg-morandi-bg rounded-xl border border-morandi-border focus:outline-none">
-                    <button onclick="addCustomBudgetItem('fixed')" class="px-4 py-2 bg-morandi-blue text-white rounded-xl text-sm font-bold hover:bg-morandi-blueDark transition shrink-0">
+                    <input type="text" id="new-fixed-name" placeholder="新增固定支出（如：房租）" class="flex-1 min-w-0 px-3 py-2 text-sm bg-morandi-bg rounded-xl border border-morandi-border focus:outline-none">
+                    <input type="number" id="new-fixed-amount" placeholder="金額" class="w-20 px-2.5 py-2 text-sm bg-morandi-bg rounded-xl border border-morandi-border focus:outline-none shrink-0">
+                    <button onclick="addCustomBudgetItem('fixed')" class="px-3.5 py-2 bg-morandi-blue text-white rounded-xl text-sm font-bold hover:bg-morandi-blueDark transition shrink-0">
                         ＋新增
                     </button>
                 </div>
@@ -487,9 +487,9 @@
                 <div id="variable-expense-list" class="space-y-2.5"></div>
 
                 <div class="pt-2 flex gap-2">
-                    <input type="text" id="new-variable-name" placeholder="新增變動支出（如：交通、日用品）" class="flex-1 px-3.5 py-2 text-sm bg-morandi-bg rounded-xl border border-morandi-border focus:outline-none">
-                    <input type="number" id="new-variable-amount" placeholder="金額" class="w-28 px-3 py-2 text-sm bg-morandi-bg rounded-xl border border-morandi-border focus:outline-none">
-                    <button onclick="addCustomBudgetItem('variable')" class="px-4 py-2 bg-morandi-apricotDark text-white rounded-xl text-sm font-bold hover:opacity-90 transition shrink-0">
+                    <input type="text" id="new-variable-name" placeholder="新增變動支出（如：交通）" class="flex-1 min-w-0 px-3 py-2 text-sm bg-morandi-bg rounded-xl border border-morandi-border focus:outline-none">
+                    <input type="number" id="new-variable-amount" placeholder="金額" class="w-20 px-2.5 py-2 text-sm bg-morandi-bg rounded-xl border border-morandi-border focus:outline-none shrink-0">
+                    <button onclick="addCustomBudgetItem('variable')" class="px-3.5 py-2 bg-morandi-apricotDark text-white rounded-xl text-sm font-bold hover:opacity-90 transition shrink-0">
                         ＋新增
                     </button>
                 </div>
@@ -508,9 +508,9 @@
                 <div id="saving-plan-list" class="space-y-2.5"></div>
 
                 <div class="pt-2 flex gap-2">
-                    <input type="text" id="new-saving-name" placeholder="新增存錢項目（如：ETF定期定額）" class="flex-1 px-3.5 py-2 text-sm bg-morandi-bg rounded-xl border border-morandi-border focus:outline-none">
-                    <input type="number" id="new-saving-amount" placeholder="金額" class="w-28 px-3 py-2 text-sm bg-morandi-bg rounded-xl border border-morandi-border focus:outline-none">
-                    <button onclick="addCustomBudgetItem('saving')" class="px-4 py-2 bg-morandi-sage text-white rounded-xl text-sm font-bold hover:bg-morandi-sageDark transition shrink-0">
+                    <input type="text" id="new-saving-name" placeholder="新增存錢項目（如：定期定額）" class="flex-1 min-w-0 px-3 py-2 text-sm bg-morandi-bg rounded-xl border border-morandi-border focus:outline-none">
+                    <input type="number" id="new-saving-amount" placeholder="金額" class="w-20 px-2.5 py-2 text-sm bg-morandi-bg rounded-xl border border-morandi-border focus:outline-none shrink-0">
+                    <button onclick="addCustomBudgetItem('saving')" class="px-3.5 py-2 bg-morandi-sage text-white rounded-xl text-sm font-bold hover:bg-morandi-sageDark transition shrink-0">
                         ＋新增
                     </button>
                 </div>
@@ -1710,11 +1710,11 @@
 
             const incomeListEl = document.getElementById('income-items-list');
             incomeListEl.innerHTML = (mData.incomes || []).map(item => `
-                <div class="flex items-center justify-between gap-2.5 p-3 rounded-xl bg-morandi-bg/60 border border-morandi-border">
-                    <span class="text-sm font-bold text-morandi-text flex-1 truncate">${item.name}</span>
-                    <div class="flex items-center gap-2">
+                <div class="flex items-center justify-between gap-2 p-3 rounded-xl bg-morandi-bg/60 border border-morandi-border">
+                    <span class="text-sm font-bold text-morandi-text flex-1 min-w-0 truncate">${item.name}</span>
+                    <div class="flex items-center gap-1.5 shrink-0">
                         <span class="text-xs text-morandi-muted">$</span>
-                        <input type="number" value="${item.amount}" oninput="updateBudgetItemAmount('income', '${item.id}', this.value)" class="w-28 px-2.5 py-1.5 text-right text-sm font-bold bg-white rounded-lg border border-morandi-border focus:outline-none">
+                        <input type="number" value="${item.amount}" oninput="updateBudgetItemAmount('income', '${item.id}', this.value)" class="w-20 px-2 py-1.5 text-right text-sm font-bold bg-white rounded-lg border border-morandi-border focus:outline-none">
                         <button onclick="removeBudgetItem('income', '${item.id}')" class="text-morandi-muted hover:text-morandi-roseDark p-1">
                             <i class="ph-bold ph-x text-base"></i>
                         </button>
@@ -1734,15 +1734,14 @@
 
             const fixedEl = document.getElementById('fixed-expense-list');
             fixedEl.innerHTML = mData.fixedExpenses.map(item => `
-                <div class="flex items-center justify-between gap-2.5 p-3 rounded-xl bg-morandi-bg/60 border border-morandi-border">
-                    <label class="flex items-center gap-2.5 text-sm font-bold text-morandi-text cursor-pointer flex-1 min-w-0">
-                        <input type="checkbox" ${item.autoImport ? 'checked' : ''} onchange="toggleFixedAutoImport('${item.id}', this.checked)" class="w-4 h-4 accent-morandi-sage rounded cursor-pointer">
+                <div class="flex items-center justify-between gap-2 p-3 rounded-xl bg-morandi-bg/60 border border-morandi-border">
+                    <label class="flex items-center gap-2 text-sm font-bold text-morandi-text cursor-pointer flex-1 min-w-0">
+                        <input type="checkbox" ${item.autoImport ? 'checked' : ''} onchange="toggleFixedAutoImport('${item.id}', this.checked)" class="w-4 h-4 accent-morandi-sage rounded cursor-pointer shrink-0">
                         <span class="truncate">${item.name}</span>
-                        <span class="text-xs px-2 py-0.5 rounded bg-morandi-blueLight text-morandi-blueDark font-semibold shrink-0">常用</span>
                     </label>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1.5 shrink-0">
                         <span class="text-xs text-morandi-muted">$</span>
-                        <input type="number" value="${item.amount}" oninput="updateBudgetItemAmount('fixed', '${item.id}', this.value)" class="w-28 px-2.5 py-1.5 text-right text-sm font-bold bg-white rounded-lg border border-morandi-border focus:outline-none">
+                        <input type="number" value="${item.amount}" oninput="updateBudgetItemAmount('fixed', '${item.id}', this.value)" class="w-20 px-2 py-1.5 text-right text-sm font-bold bg-white rounded-lg border border-morandi-border focus:outline-none">
                         <button onclick="removeBudgetItem('fixed', '${item.id}')" class="text-morandi-muted hover:text-morandi-roseDark p-1">
                             <i class="ph-bold ph-x text-base"></i>
                         </button>
@@ -1752,11 +1751,11 @@
 
             const varEl = document.getElementById('variable-expense-list');
             varEl.innerHTML = mData.variableExpenses.map(item => `
-                <div class="flex items-center justify-between gap-2.5 p-3 rounded-xl bg-morandi-bg/60 border border-morandi-border">
-                    <span class="text-sm font-bold text-morandi-text flex-1 truncate">${item.name}</span>
-                    <div class="flex items-center gap-2">
+                <div class="flex items-center justify-between gap-2 p-3 rounded-xl bg-morandi-bg/60 border border-morandi-border">
+                    <span class="text-sm font-bold text-morandi-text flex-1 min-w-0 truncate">${item.name}</span>
+                    <div class="flex items-center gap-1.5 shrink-0">
                         <span class="text-xs text-morandi-muted">$</span>
-                        <input type="number" value="${item.amount}" oninput="updateBudgetItemAmount('variable', '${item.id}', this.value)" class="w-28 px-2.5 py-1.5 text-right text-sm font-bold bg-white rounded-lg border border-morandi-border focus:outline-none">
+                        <input type="number" value="${item.amount}" oninput="updateBudgetItemAmount('variable', '${item.id}', this.value)" class="w-20 px-2 py-1.5 text-right text-sm font-bold bg-white rounded-lg border border-morandi-border focus:outline-none">
                         <button onclick="removeBudgetItem('variable', '${item.id}')" class="text-morandi-muted hover:text-morandi-roseDark p-1">
                             <i class="ph-bold ph-x text-base"></i>
                         </button>
@@ -1766,11 +1765,11 @@
 
             const savEl = document.getElementById('saving-plan-list');
             savEl.innerHTML = mData.savings.map(item => `
-                <div class="flex items-center justify-between gap-2.5 p-3 rounded-xl bg-morandi-bg/60 border border-morandi-border">
-                    <span class="text-sm font-bold text-morandi-text flex-1 truncate">${item.name}</span>
-                    <div class="flex items-center gap-2">
+                <div class="flex items-center justify-between gap-2 p-3 rounded-xl bg-morandi-bg/60 border border-morandi-border">
+                    <span class="text-sm font-bold text-morandi-text flex-1 min-w-0 truncate">${item.name}</span>
+                    <div class="flex items-center gap-1.5 shrink-0">
                         <span class="text-xs text-morandi-muted">$</span>
-                        <input type="number" value="${item.amount}" oninput="updateBudgetItemAmount('saving', '${item.id}', this.value)" class="w-28 px-2.5 py-1.5 text-right text-sm font-bold bg-white rounded-lg border border-morandi-border focus:outline-none">
+                        <input type="number" value="${item.amount}" oninput="updateBudgetItemAmount('saving', '${item.id}', this.value)" class="w-20 px-2 py-1.5 text-right text-sm font-bold bg-white rounded-lg border border-morandi-border focus:outline-none">
                         <button onclick="removeBudgetItem('saving', '${item.id}')" class="text-morandi-muted hover:text-morandi-roseDark p-1">
                             <i class="ph-bold ph-x text-base"></i>
                         </button>
