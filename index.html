@@ -601,7 +601,12 @@
             
             <!-- 歷史累積存錢總看板 -->
             <div class="bg-gradient-to-br from-[#8FA89B] to-[#6F868B] rounded-2xl p-6 text-white shadow-soft">
-                <span class="text-xs uppercase tracking-widest opacity-90 block">自使用 APP 以來累計存下</span>
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-xs uppercase tracking-widest opacity-90 block">自使用 APP 以來累計存下</span>
+                    <button onclick="toggleEditVaultTotalsForm()" class="px-2.5 py-1 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition flex items-center gap-1">
+                        <i class="ph-bold ph-pencil-simple"></i> 調整累計金額
+                    </button>
+                </div>
                 <div class="flex items-baseline gap-2 mt-1">
                     <span id="vault-grand-total" class="text-4xl font-bold tracking-tight">$0</span>
                     <span class="text-xs opacity-90">TWD</span>
@@ -616,6 +621,25 @@
                         <span id="vault-surplus-total" class="text-base font-bold mt-0.5 block">$0</span>
                     </div>
                 </div>
+
+                <!-- 手動修正累計金額面板 (防誤觸或多按) -->
+                <div id="vault-totals-edit-form" class="hidden mt-4 pt-4 border-t border-white/25 space-y-3">
+                    <p class="text-xs opacity-95 font-medium">若誤觸或多按，可直接於下方修改累計金額：</p>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div>
+                            <label class="text-[11px] opacity-85 block mb-1">歷史規劃存錢累計 ($)</label>
+                            <input type="number" id="edit-vault-planned-input" class="w-full px-3 py-1.5 rounded-xl bg-white text-morandi-text text-sm font-bold focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="text-[11px] opacity-85 block mb-1">月底結餘轉入累計 ($)</label>
+                            <input type="number" id="edit-vault-surplus-input" class="w-full px-3 py-1.5 rounded-xl bg-white text-morandi-text text-sm font-bold focus:outline-none">
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2 pt-1">
+                        <button onclick="toggleEditVaultTotalsForm()" class="px-3.5 py-1.5 rounded-xl bg-white/20 text-white text-xs font-bold">取消</button>
+                        <button onclick="saveEditedVaultTotals()" class="px-4 py-1.5 rounded-xl bg-white text-morandi-sageDark text-xs font-bold shadow-xs">儲存修改</button>
+                    </div>
+                </div>
             </div>
 
             <!-- 自訂「願望清單 / 存錢目標」進度條 -->
@@ -626,7 +650,7 @@
                             <i class="ph-fill ph-shooting-star text-morandi-sage text-lg"></i>
                             願望清單 / 存錢目標進度
                         </h3>
-                        <p class="text-xs text-morandi-muted">設定目標金額，視覺化追蹤達成率</p>
+                        <p class="text-xs text-morandi-muted">設定目標金額，視覺化追蹤達成率（可隨時編輯或扣回誤按金額）</p>
                     </div>
                     <button onclick="toggleNewGoalForm()" class="px-3.5 py-1.5 rounded-xl bg-morandi-sageLight text-morandi-sageDark text-xs font-bold hover:bg-morandi-sage hover:text-white transition">
                         ＋新增目標
@@ -649,6 +673,20 @@
 
                 <!-- 願望清單列表 -->
                 <div id="wishlist-goals-container" class="space-y-3.5"></div>
+            </div>
+
+            <!-- 存錢入帳紀錄明細（可隨時編輯或刪除單筆誤按紀錄） -->
+            <div class="bg-white rounded-2xl p-5 shadow-soft border border-morandi-border space-y-3.5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-base font-bold text-morandi-text flex items-center gap-1.5">
+                            <i class="ph-bold ph-clock-counter-clockwise text-morandi-sage text-lg"></i>
+                            存錢入帳紀錄明細
+                        </h3>
+                        <p class="text-xs text-morandi-muted">若不小心多按或誤觸存入，可於此處直接修改金額或刪除撤銷</p>
+                    </div>
+                </div>
+                <div id="vault-logs-container" class="space-y-2.5"></div>
             </div>
         </section>
 
@@ -1077,7 +1115,8 @@
             vault: {
                 plannedSavedTotal: 0,
                 surplusSavedTotal: 0,
-                goals: []
+                goals: [],
+                logs: []
             },
             months: {
                 '2026-11': createEmptyMonthData(),
@@ -1087,6 +1126,8 @@
 
         let appState = loadState();
         let currentGuideStep = 0;
+        let editingGoalId = null;
+        let editingVaultLogId = null;
 
         const GUIDE_STEPS = [
             {
@@ -1121,6 +1162,9 @@
                 if (!raw) return JSON.parse(JSON.stringify(DEFAULT_STATE));
                 const parsed = JSON.parse(raw);
                 parsed.settings = Object.assign({}, DEFAULT_STATE.settings, parsed.settings || {});
+                parsed.vault = Object.assign({ plannedSavedTotal: 0, surplusSavedTotal: 0, goals: [], logs: [] }, parsed.vault || {});
+                if (!Array.isArray(parsed.vault.goals)) parsed.vault.goals = [];
+                if (!Array.isArray(parsed.vault.logs)) parsed.vault.logs = [];
                 const todayYM = getCurrentYearMonth();
                 if (!parsed.months[todayYM]) {
                     parsed.months[todayYM] = createEmptyMonthData();
@@ -2404,19 +2448,58 @@
                 showToast('目前尚無正數月結餘可轉入金庫');
                 return;
             }
-            appState.vault.surplusSavedTotal += Math.round(surplus * 0.2);
+            const transferAmt = Math.round(surplus * 0.2);
+            appState.vault.surplusSavedTotal += transferAmt;
+            let targetGoalId = null;
+            let targetGoalTitle = '月底結餘轉入金庫';
             if (appState.vault.goals.length > 0) {
-                appState.vault.goals[0].current += Math.round(surplus * 0.2);
+                appState.vault.goals[0].current += transferAmt;
+                targetGoalId = appState.vault.goals[0].id;
+                targetGoalTitle = `月底結餘轉入（${appState.vault.goals[0].title}）`;
             }
+            if (!Array.isArray(appState.vault.logs)) appState.vault.logs = [];
+            appState.vault.logs.unshift({
+                id: 'vlog_' + Date.now(),
+                date: getTodayLocalISO(),
+                type: 'surplus',
+                goalId: targetGoalId,
+                title: targetGoalTitle,
+                amount: transferAmt
+            });
             saveState();
             renderVaultTab();
             switchTab('vault');
-            showToast(`已將部分月結餘 ${formatMoney(Math.round(surplus * 0.2))} 轉入金庫！`);
+            showToast(`已將部分月結餘 ${formatMoney(transferAmt)} 轉入金庫！`);
         }
 
-        // ==================== TAB 4: 金庫與願望清單 ====================
+        // ==================== TAB 4: 金庫、願望清單與存錢紀錄管理 ====================
+        function toggleEditVaultTotalsForm() {
+            const form = document.getElementById('vault-totals-edit-form');
+            if (!form) return;
+            const isHidden = form.classList.contains('hidden');
+            if (isHidden) {
+                document.getElementById('edit-vault-planned-input').value = Number(appState.vault.plannedSavedTotal) || 0;
+                document.getElementById('edit-vault-surplus-input').value = Number(appState.vault.surplusSavedTotal) || 0;
+                form.classList.remove('hidden');
+            } else {
+                form.classList.add('hidden');
+            }
+        }
+
+        function saveEditedVaultTotals() {
+            const pVal = Math.max(0, Number(document.getElementById('edit-vault-planned-input').value) || 0);
+            const sVal = Math.max(0, Number(document.getElementById('edit-vault-surplus-input').value) || 0);
+            appState.vault.plannedSavedTotal = pVal;
+            appState.vault.surplusSavedTotal = sVal;
+            document.getElementById('vault-totals-edit-form').classList.add('hidden');
+            saveState();
+            renderVaultTab();
+            showToast('已更新金庫累計金額！');
+        }
+
         function renderVaultTab() {
             const v = appState.vault;
+            if (!Array.isArray(v.logs)) v.logs = [];
             const grandTotal = (Number(v.plannedSavedTotal) || 0) + (Number(v.surplusSavedTotal) || 0);
             document.getElementById('vault-grand-total').textContent = formatMoney(grandTotal);
             document.getElementById('vault-planned-total').textContent = formatMoney(v.plannedSavedTotal);
@@ -2425,43 +2508,121 @@
             const container = document.getElementById('wishlist-goals-container');
             if (!v.goals || v.goals.length === 0) {
                 container.innerHTML = `<p class="text-sm text-morandi-muted text-center py-6">目前尚無願望目標，點擊右上角「＋新增目標」建立你的第一個存錢願望吧！</p>`;
-                return;
+            } else {
+                container.innerHTML = v.goals.map(goal => {
+                    const pct = goal.target > 0 ? Math.min(100, Math.round((goal.current / goal.target) * 100)) : 0;
+                    const remain = Math.max(0, goal.target - goal.current);
+                    const done = pct >= 100;
+                    const isEditing = editingGoalId === goal.id;
+
+                    return `
+                        <div class="p-4 rounded-2xl border ${done ? 'bg-morandi-sageLight/50 border-morandi-sage' : 'bg-morandi-bg/60 border-morandi-border'} space-y-3">
+                            <div class="flex items-center justify-between gap-2 flex-wrap">
+                                <div>
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <h4 class="text-base font-bold text-morandi-text">${goal.title}</h4>
+                                        <span class="text-xs px-2.5 py-0.5 rounded-full font-bold ${done ? 'bg-morandi-sageDark text-white' : 'bg-white text-morandi-sageDark border border-morandi-border'}">
+                                            ${done ? '🎉 已達成 100%' : `達成率 ${pct}%`}
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-morandi-muted mt-1">
+                                        目前已存 <strong class="text-morandi-text">${formatMoney(goal.current)}</strong> / 目標 ${formatMoney(goal.target)}
+                                        ${remain > 0 ? `（還差 ${formatMoney(remain)}）` : ''}
+                                    </p>
+                                </div>
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <div class="flex items-center bg-white rounded-xl border border-morandi-border p-0.5">
+                                        <span class="text-xs text-morandi-muted pl-2 pr-1">$</span>
+                                        <input type="number" id="custom-deposit-${goal.id}" placeholder="自訂金額" class="w-20 py-1 pr-1.5 text-xs font-bold text-morandi-text bg-transparent focus:outline-none">
+                                        <button onclick="submitCustomGoalDeposit('${goal.id}', 1)" class="px-2.5 py-1 rounded-lg bg-morandi-sage text-white text-xs font-bold hover:bg-morandi-sageDark transition" title="存入自訂金額">
+                                            ＋存入
+                                        </button>
+                                        <button onclick="submitCustomGoalDeposit('${goal.id}', -1)" class="px-2 py-1 rounded-lg text-morandi-muted hover:bg-morandi-roseLight hover:text-morandi-roseDark text-xs font-bold transition" title="扣回自訂金額">
+                                            －扣回
+                                        </button>
+                                    </div>
+                                    <button onclick="openEditGoalInline('${goal.id}')" class="w-8 h-8 rounded-lg bg-white border border-morandi-border text-morandi-sageDark hover:bg-morandi-sage hover:text-white flex items-center justify-center transition" title="編輯此願望金額或名稱">
+                                        <i class="ph-bold ph-pencil-simple text-sm"></i>
+                                    </button>
+                                    <button onclick="deleteGoal('${goal.id}')" class="w-8 h-8 rounded-lg bg-white border border-morandi-border text-morandi-muted hover:bg-morandi-roseDark hover:text-white flex items-center justify-center transition" title="刪除此願望">
+                                        <i class="ph-bold ph-trash text-sm"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="w-full h-3 bg-white rounded-full overflow-hidden border border-morandi-border/60">
+                                <div class="h-full bg-morandi-sage transition-all duration-500 rounded-full" style="width: ${pct}%"></div>
+                            </div>
+                            ${isEditing ? `
+                                <div class="pt-3 mt-2 border-t border-morandi-border/80 space-y-2.5 bg-white p-3 rounded-xl">
+                                    <p class="text-xs font-bold text-morandi-sageDark">✏️ 修改願望名稱與存錢金額（儲存後將自動同步金庫總計）</p>
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                        <div>
+                                            <label class="text-[11px] text-morandi-muted block mb-0.5">目標名稱</label>
+                                            <input type="text" id="edit-goal-title-${goal.id}" value="${goal.title}" class="w-full px-2.5 py-1.5 text-xs font-bold bg-morandi-bg rounded-lg border border-morandi-border focus:outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="text-[11px] text-morandi-muted block mb-0.5">目前已存金額 ($)</label>
+                                            <input type="number" id="edit-goal-current-${goal.id}" value="${goal.current}" class="w-full px-2.5 py-1.5 text-xs font-bold bg-morandi-bg rounded-lg border border-morandi-border focus:outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="text-[11px] text-morandi-muted block mb-0.5">目標總金額 ($)</label>
+                                            <input type="number" id="edit-goal-target-${goal.id}" value="${goal.target}" class="w-full px-2.5 py-1.5 text-xs font-bold bg-morandi-bg rounded-lg border border-morandi-border focus:outline-none">
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-end gap-2 pt-1">
+                                        <button onclick="cancelEditGoalInline()" class="px-3 py-1.5 rounded-lg bg-morandi-bg text-xs font-bold text-morandi-muted">取消</button>
+                                        <button onclick="saveEditGoalInline('${goal.id}')" class="px-3.5 py-1.5 rounded-lg bg-morandi-sage text-white text-xs font-bold">儲存修改</button>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('');
             }
 
-            container.innerHTML = v.goals.map(goal => {
-                const pct = goal.target > 0 ? Math.min(100, Math.round((goal.current / goal.target) * 100)) : 0;
-                const remain = Math.max(0, goal.target - goal.current);
-                const done = pct >= 100;
-                return `
-                    <div class="p-4 rounded-2xl border ${done ? 'bg-morandi-sageLight/50 border-morandi-sage' : 'bg-morandi-bg/60 border-morandi-border'} space-y-3">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <h4 class="text-base font-bold text-morandi-text">${goal.title}</h4>
-                                    <span class="text-xs px-2.5 py-0.5 rounded-full font-bold ${done ? 'bg-morandi-sageDark text-white' : 'bg-white text-morandi-sageDark border border-morandi-border'}">
-                                        ${done ? '🎉 已達成 100%' : `達成率 ${pct}%`}
-                                    </span>
+            // 渲染存錢入帳紀錄明細
+            const logsEl = document.getElementById('vault-logs-container');
+            if (!logsEl) return;
+            if (!v.logs || v.logs.length === 0) {
+                logsEl.innerHTML = `<p class="text-xs text-morandi-muted text-center py-4">目前尚無存錢操作紀錄，當你於願望清單「＋存入」或「轉入月結餘」時會顯示於此處。</p>`;
+            } else {
+                logsEl.innerHTML = v.logs.map(log => {
+                    const isEditingLog = editingVaultLogId === log.id;
+                    return `
+                        <div class="p-3 rounded-xl bg-morandi-bg/60 border border-morandi-border space-y-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="text-xs px-2 py-0.5 rounded-md bg-white border border-morandi-border text-morandi-muted font-medium">${log.date}</span>
+                                        <span class="text-sm font-bold text-morandi-text truncate">${log.title}</span>
+                                    </div>
                                 </div>
-                                <p class="text-xs text-morandi-muted mt-1">
-                                    目前已存 <strong class="text-morandi-text">${formatMoney(goal.current)}</strong> / 目標 ${formatMoney(goal.target)}
-                                    ${remain > 0 ? `（還差 ${formatMoney(remain)}）` : ''}
-                                </p>
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <span class="text-sm font-bold ${log.amount >= 0 ? 'text-morandi-sageDark' : 'text-morandi-roseDark'} mr-1">
+                                        ${log.amount >= 0 ? '+' : ''}${formatMoney(log.amount)}
+                                    </span>
+                                    <button onclick="openEditVaultLogInline('${log.id}')" class="w-8 h-8 rounded-lg bg-white border border-morandi-border text-morandi-sageDark hover:bg-morandi-sage hover:text-white flex items-center justify-center transition" title="編輯這筆存入金額">
+                                        <i class="ph-bold ph-pencil-simple text-sm"></i>
+                                    </button>
+                                    <button onclick="deleteVaultLog('${log.id}')" class="w-8 h-8 rounded-lg bg-white border border-morandi-border text-morandi-muted hover:bg-morandi-roseDark hover:text-white flex items-center justify-center transition" title="刪除並撤銷這筆存入金額">
+                                        <i class="ph-bold ph-trash text-sm"></i>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="flex items-center gap-1.5">
-                                <button onclick="depositToGoal('${goal.id}', 1000)" class="px-3 py-1.5 rounded-xl bg-morandi-sage text-white text-xs font-bold hover:bg-morandi-sageDark transition">
-                                    +$1,000
-                                </button>
-                                <button onclick="deleteGoal('${goal.id}')" class="p-1.5 text-morandi-muted hover:text-morandi-roseDark">
-                                    <i class="ph-bold ph-trash text-base"></i>
-                                </button>
-                            </div>
+                            ${isEditingLog ? `
+                                <div class="pt-2 border-t border-morandi-border flex items-center justify-between gap-2 bg-white p-2.5 rounded-lg">
+                                    <span class="text-xs font-bold text-morandi-text shrink-0">修改存入金額 ($)：</span>
+                                    <input type="number" id="edit-vlog-amount-${log.id}" value="${log.amount}" class="w-28 px-2.5 py-1 text-sm font-bold bg-morandi-bg rounded-lg border border-morandi-border focus:outline-none">
+                                    <div class="flex items-center gap-1.5 shrink-0">
+                                        <button onclick="cancelEditVaultLogInline()" class="px-2.5 py-1 rounded-lg bg-morandi-bg text-xs font-bold text-morandi-muted">取消</button>
+                                        <button onclick="saveEditVaultLogInline('${log.id}')" class="px-3 py-1 rounded-lg bg-morandi-sage text-white text-xs font-bold">儲存</button>
+                                    </div>
+                                </div>
+                            ` : ''}
                         </div>
-                        <div class="w-full h-3 bg-white rounded-full overflow-hidden border border-morandi-border/60">
-                            <div class="h-full bg-morandi-sage transition-all duration-500 rounded-full" style="width: ${pct}%"></div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+                    `;
+                }).join('');
+            }
         }
 
         function toggleNewGoalForm() {
@@ -2471,18 +2632,30 @@
         function createSavingsGoal() {
             const title = document.getElementById('goal-title-input').value.trim();
             const target = Number(document.getElementById('goal-target-input').value) || 0;
-            const current = Number(document.getElementById('goal-init-input').value) || 0;
+            const current = Math.max(0, Number(document.getElementById('goal-init-input').value) || 0);
             if (!title || target <= 0) {
                 showToast('請輸入完整的願望名稱與目標金額');
                 return;
             }
+            const newGoalId = 'g_' + Date.now();
             appState.vault.goals.unshift({
-                id: 'g_' + Date.now(),
+                id: newGoalId,
                 title,
                 target,
                 current
             });
-            appState.vault.plannedSavedTotal += current;
+            appState.vault.plannedSavedTotal = Math.max(0, (Number(appState.vault.plannedSavedTotal) || 0) + current);
+            if (current > 0) {
+                if (!Array.isArray(appState.vault.logs)) appState.vault.logs = [];
+                appState.vault.logs.unshift({
+                    id: 'vlog_' + Date.now(),
+                    date: getTodayLocalISO(),
+                    type: 'planned',
+                    goalId: newGoalId,
+                    title: `建立願望初始存入：${title}`,
+                    amount: current
+                });
+            }
             document.getElementById('goal-title-input').value = '';
             document.getElementById('goal-target-input').value = '';
             document.getElementById('goal-init-input').value = '';
@@ -2492,21 +2665,151 @@
             showToast(`已建立願望目標「${title}」`);
         }
 
+        function submitCustomGoalDeposit(goalId, sign = 1) {
+            const inputEl = document.getElementById(`custom-deposit-${goalId}`);
+            const rawVal = Number(inputEl?.value);
+            if (!rawVal || rawVal <= 0) {
+                showToast('請先輸入有效的自訂金額');
+                return;
+            }
+            depositToGoal(goalId, rawVal * sign);
+            if (inputEl) inputEl.value = '';
+        }
+
         function depositToGoal(goalId, amount) {
             const goal = appState.vault.goals.find(g => g.id === goalId);
             if (!goal) return;
-            goal.current += amount;
-            appState.vault.plannedSavedTotal += amount;
+            if (amount < 0 && goal.current <= 0) {
+                showToast('目前願望已存金額為 $0，無須再扣減');
+                return;
+            }
+            const actualDelta = amount < 0 ? -Math.min(goal.current, Math.abs(amount)) : amount;
+            goal.current = Math.max(0, goal.current + actualDelta);
+            appState.vault.plannedSavedTotal = Math.max(0, (Number(appState.vault.plannedSavedTotal) || 0) + actualDelta);
+
+            if (!Array.isArray(appState.vault.logs)) appState.vault.logs = [];
+            appState.vault.logs.unshift({
+                id: 'vlog_' + Date.now(),
+                date: getTodayLocalISO(),
+                type: 'planned',
+                goalId: goal.id,
+                title: actualDelta >= 0 ? `存入願望：${goal.title}` : `扣回誤按：${goal.title}`,
+                amount: actualDelta
+            });
+
             saveState();
             renderVaultTab();
-            showToast(`已為「${goal.title}」存入 ${formatMoney(amount)}！`);
+            showToast(actualDelta >= 0 ? `已為「${goal.title}」存入 ${formatMoney(actualDelta)}！` : `已從「${goal.title}」扣回 ${formatMoney(Math.abs(actualDelta))}！`);
+        }
+
+        function openEditGoalInline(goalId) {
+            editingGoalId = editingGoalId === goalId ? null : goalId;
+            renderVaultTab();
+        }
+
+        function cancelEditGoalInline() {
+            editingGoalId = null;
+            renderVaultTab();
+        }
+
+        function saveEditGoalInline(goalId) {
+            const goal = appState.vault.goals.find(g => g.id === goalId);
+            if (!goal) return;
+            const newTitle = (document.getElementById(`edit-goal-title-${goalId}`)?.value || '').trim();
+            const newCurrent = Math.max(0, Number(document.getElementById(`edit-goal-current-${goalId}`)?.value) || 0);
+            const newTarget = Math.max(1, Number(document.getElementById(`edit-goal-target-${goalId}`)?.value) || 1);
+
+            if (!newTitle) {
+                showToast('願望名稱不能為空白');
+                return;
+            }
+
+            const delta = newCurrent - (Number(goal.current) || 0);
+            goal.title = newTitle;
+            goal.current = newCurrent;
+            goal.target = newTarget;
+            appState.vault.plannedSavedTotal = Math.max(0, (Number(appState.vault.plannedSavedTotal) || 0) + delta);
+
+            editingGoalId = null;
+            saveState();
+            renderVaultTab();
+            showToast('已更新願望目標與金庫累計金額！');
         }
 
         function deleteGoal(goalId) {
+            const goal = appState.vault.goals.find(g => g.id === goalId);
+            if (goal) {
+                appState.vault.plannedSavedTotal = Math.max(0, (Number(appState.vault.plannedSavedTotal) || 0) - (Number(goal.current) || 0));
+            }
             appState.vault.goals = appState.vault.goals.filter(g => g.id !== goalId);
+            if (Array.isArray(appState.vault.logs)) {
+                appState.vault.logs = appState.vault.logs.filter(l => l.goalId !== goalId);
+            }
             saveState();
             renderVaultTab();
-            showToast('已移除該願望項目');
+            showToast('已移除該願望項目並同步扣回存錢金額');
+        }
+
+        function openEditVaultLogInline(logId) {
+            editingVaultLogId = editingVaultLogId === logId ? null : logId;
+            renderVaultTab();
+        }
+
+        function cancelEditVaultLogInline() {
+            editingVaultLogId = null;
+            renderVaultTab();
+        }
+
+        function saveEditVaultLogInline(logId) {
+            if (!Array.isArray(appState.vault.logs)) return;
+            const log = appState.vault.logs.find(l => l.id === logId);
+            if (!log) return;
+            const newAmt = Number(document.getElementById(`edit-vlog-amount-${logId}`)?.value) || 0;
+            const delta = newAmt - (Number(log.amount) || 0);
+
+            log.amount = newAmt;
+            if (log.type === 'surplus') {
+                appState.vault.surplusSavedTotal = Math.max(0, (Number(appState.vault.surplusSavedTotal) || 0) + delta);
+            } else {
+                appState.vault.plannedSavedTotal = Math.max(0, (Number(appState.vault.plannedSavedTotal) || 0) + delta);
+            }
+
+            if (log.goalId) {
+                const goal = appState.vault.goals.find(g => g.id === log.goalId);
+                if (goal) {
+                    goal.current = Math.max(0, (Number(goal.current) || 0) + delta);
+                }
+            }
+
+            editingVaultLogId = null;
+            saveState();
+            renderVaultTab();
+            showToast('已修改該筆存入紀錄並同步更新金庫！');
+        }
+
+        function deleteVaultLog(logId) {
+            if (!Array.isArray(appState.vault.logs)) return;
+            const log = appState.vault.logs.find(l => l.id === logId);
+            if (!log) return;
+            const amt = Number(log.amount) || 0;
+
+            if (log.type === 'surplus') {
+                appState.vault.surplusSavedTotal = Math.max(0, (Number(appState.vault.surplusSavedTotal) || 0) - amt);
+            } else {
+                appState.vault.plannedSavedTotal = Math.max(0, (Number(appState.vault.plannedSavedTotal) || 0) - amt);
+            }
+
+            if (log.goalId) {
+                const goal = appState.vault.goals.find(g => g.id === log.goalId);
+                if (goal) {
+                    goal.current = Math.max(0, (Number(goal.current) || 0) - amt);
+                }
+            }
+
+            appState.vault.logs = appState.vault.logs.filter(l => l.id !== logId);
+            saveState();
+            renderVaultTab();
+            showToast('已刪除該筆存錢紀錄並扣回金額！');
         }
 
         // ==================== 每日 00:00 自動結算與跨日日期自動推進 ====================
