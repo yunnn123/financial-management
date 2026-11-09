@@ -237,7 +237,7 @@
                                 <h3 class="text-base font-bold text-morandi-text">00:00 昨日自動結算</h3>
                                 <span id="settlement-date-label" class="text-xs px-2.5 py-0.5 rounded-full bg-morandi-bg text-morandi-muted font-medium">尚無紀錄 00:00 結算</span>
                             </div>
-                            <p id="settlement-summary-brief" class="text-sm text-morandi-muted mt-0.5 truncate">結算日總花費 $0｜當日餐費 $0</p>
+                            <p id="settlement-summary-brief" class="text-sm text-morandi-muted mt-0.5 break-words">結算日總花費 $0｜當日餐費 $0</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
@@ -262,7 +262,7 @@
                         </div>
                         <div class="bg-morandi-bg/70 rounded-xl p-2.5">
                             <span class="text-xs text-morandi-muted block">最高單筆</span>
-                            <span id="settle-max" class="text-sm font-bold text-morandi-roseDark mt-0.5 block truncate">-</span>
+                            <span id="settle-max" class="text-sm font-bold text-morandi-roseDark mt-0.5 block break-words leading-snug">-</span>
                         </div>
                     </div>
                     <div class="flex items-center justify-between text-xs text-morandi-muted bg-morandi-bg/40 px-3 py-2 rounded-xl">
@@ -284,7 +284,7 @@
                                 <p class="text-base font-bold text-morandi-text">信用卡待繳帳單專區</p>
                                 <span id="home-cc-count-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-morandi-roseLight text-morandi-roseDark font-bold">0 筆刷卡</span>
                             </div>
-                            <p class="text-xs sm:text-sm text-morandi-muted mt-0.5 truncate">記帳選「信用卡」之金額會自動導入此處累計</p>
+                            <p class="text-xs sm:text-sm text-morandi-muted mt-0.5 break-words">記帳選「信用卡」之金額會自動導入此處累計</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-3 shrink-0">
@@ -600,7 +600,7 @@
         <section id="tab-vault" class="tab-content hidden space-y-5">
             
             <!-- 歷史累積存錢總看板 -->
-            <div class="bg-gradient-to-br from-[#8FA89B] to-[#6F868B] rounded-2xl p-6 text-white shadow-soft">
+            <div class="bg-gradient-to-br from-morandi-sage to-morandi-sageDark rounded-2xl p-6 text-white shadow-soft transition-colors duration-300">
                 <div class="flex items-center justify-between gap-2">
                     <span class="text-xs uppercase tracking-widest opacity-90 block">自使用 APP 以來累計存下</span>
                     <button onclick="toggleEditVaultTotalsForm()" class="px-2.5 py-1 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition flex items-center gap-1">
@@ -756,22 +756,6 @@
                 </div>
             </div>
 
-            <!-- 付款方式 -->
-            <div class="bg-white p-3.5 rounded-2xl border border-morandi-border space-y-2.5">
-                <label class="text-xs text-morandi-muted block">付款方式（選信用卡將自動導入信用卡帳單區塊）</label>
-                <div class="grid grid-cols-3 gap-2">
-                    <button type="button" onclick="selectPaymentMethod('cash')" id="pay-btn-cash" class="py-2.5 rounded-xl text-xs font-bold border border-morandi-sage bg-morandi-sage text-white transition flex items-center justify-center gap-1">
-                        💵 現金/轉帳
-                    </button>
-                    <button type="button" onclick="selectPaymentMethod('credit')" id="pay-btn-credit" class="py-2.5 rounded-xl text-xs font-bold border border-morandi-border bg-morandi-bg text-morandi-text transition flex items-center justify-center gap-1">
-                        💳 信用卡
-                    </button>
-                    <button type="button" onclick="selectPaymentMethod('mobile')" id="pay-btn-mobile" class="py-2.5 rounded-xl text-xs font-bold border border-morandi-border bg-morandi-bg text-morandi-text transition flex items-center justify-center gap-1">
-                        📱 行動支付
-                    </button>
-                </div>
-            </div>
-
             <!-- 主分類選擇 (餐費 / 變動支出 / 固定支出) -->
             <div class="bg-white p-3.5 rounded-2xl border border-morandi-border space-y-2">
                 <label class="text-xs text-morandi-muted block">主分類選擇</label>
@@ -784,6 +768,22 @@
                     </button>
                     <button type="button" onclick="selectMainType('fixed')" id="main-type-fixed" class="py-2 rounded-xl text-xs font-bold border border-morandi-border bg-morandi-bg text-morandi-text transition">
                         📌 固定支出
+                    </button>
+                </div>
+            </div>
+
+            <!-- 付款方式 -->
+            <div class="bg-white p-3.5 rounded-2xl border border-morandi-border space-y-2.5">
+                <label class="text-xs text-morandi-muted block">付款方式（選信用卡將自動導入信用卡帳單區塊）</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="button" onclick="selectPaymentMethod('cash')" id="pay-btn-cash" class="py-2.5 rounded-xl text-xs font-bold border border-morandi-sage bg-morandi-sage text-white transition flex items-center justify-center gap-1">
+                        💵 現金/轉帳
+                    </button>
+                    <button type="button" onclick="selectPaymentMethod('credit')" id="pay-btn-credit" class="py-2.5 rounded-xl text-xs font-bold border border-morandi-border bg-morandi-bg text-morandi-text transition flex items-center justify-center gap-1">
+                        💳 信用卡
+                    </button>
+                    <button type="button" onclick="selectPaymentMethod('mobile')" id="pay-btn-mobile" class="py-2.5 rounded-xl text-xs font-bold border border-morandi-border bg-morandi-bg text-morandi-text transition flex items-center justify-center gap-1">
+                        📱 行動支付
                     </button>
                 </div>
             </div>
@@ -1277,8 +1277,8 @@
         const THEME_PRESETS = {
             sage: { bg: '#F5F3EF', primary: '#8FA89B', dark: '#6B8577', light: '#E8EFEA', sec: '#93A8AC', secDark: '#6F868B', secLight: '#EBF1F2' },
             blue: { bg: '#F2F5F7', primary: '#7E99A3', dark: '#5C7882', light: '#E6EEF0', sec: '#96A89B', secDark: '#718577', secLight: '#EAF0EC' },
-            rose: { bg: '#F7F3F2', primary: '#C59B9B', dark: '#A37676', light: '#F5EBEB', sec: '#B5A89E', secDark: '#8F8177', secLight: '#F2EFECE' },
-            milk: { bg: '#F7F4EFE', primary: '#B59B82', dark: '#8F755D', light: '#F3ECE4', sec: '#9CA89E', secDark: '#78857A', secLight: '#ECF0ED' },
+            rose: { bg: '#F7F3F2', primary: '#C59B9B', dark: '#A37676', light: '#F5EBEB', sec: '#B5A89E', secDark: '#8F8177', secLight: '#F2EFEC' },
+            milk: { bg: '#F7F4EF', primary: '#B59B82', dark: '#8F755D', light: '#F3ECE4', sec: '#9CA89E', secDark: '#78857A', secLight: '#ECF0ED' },
             lavender: { bg: '#F4F3F7', primary: '#9D96B8', dark: '#797196', light: '#ECEAF5', sec: '#93A8AC', secDark: '#6F868B', secLight: '#EBF1F2' }
         };
 
@@ -1518,16 +1518,16 @@
                 bar.className = 'h-full bg-morandi-roseDark transition-all duration-500 rounded-full';
                 advice.innerHTML = `<i class="ph-fill ph-warning-circle text-morandi-roseDark text-base"></i><span class="text-morandi-roseDark">Week ${week} 已超支 ${formatMoney(Math.abs(weekRemaining))}，將由總餐費勻支</span>`;
             } else if (ratio <= 0.25) {
-                card.className = 'rounded-2xl p-5 shadow-soft border border-morandi-apricot bg-morandi-apricotLight transition-colors duration-300';
-                badge.className = 'px-3 py-1 rounded-xl text-xs font-bold text-white bg-morandi-apricotDark';
+                card.className = 'rounded-2xl p-5 shadow-soft border border-morandi-sage bg-morandi-sageLight/65 transition-colors duration-300';
+                badge.className = 'px-3 py-1 rounded-xl text-xs font-bold text-white bg-morandi-sage';
                 badge.textContent = '餘額警戒';
-                bar.className = 'h-full bg-morandi-apricotDark transition-all duration-500 rounded-full';
-                advice.innerHTML = `<i class="ph-fill ph-bell-ringing text-morandi-apricotDark text-base"></i><span class="text-morandi-apricotDark">今日${weekdayName}（本週剩 ${remainingDays} 天），平均每日可用 <strong>${formatMoney(dailyAvg)}</strong></span>`;
+                bar.className = 'h-full bg-morandi-sage transition-all duration-500 rounded-full';
+                advice.innerHTML = `<i class="ph-fill ph-bell-ringing text-morandi-sageDark text-base"></i><span class="text-morandi-sageDark">今日${weekdayName}（本週剩 ${remainingDays} 天），平均每日可用 <strong>${formatMoney(dailyAvg)}</strong></span>`;
             } else {
                 card.className = 'rounded-2xl p-5 shadow-soft border border-morandi-sage bg-morandi-sageLight/65 transition-colors duration-300';
-                badge.className = 'px-3 py-1 rounded-xl text-xs font-bold text-white bg-morandi-sageDark';
+                badge.className = 'px-3 py-1 rounded-xl text-xs font-bold text-white bg-morandi-sage';
                 badge.textContent = '額度充裕';
-                bar.className = 'h-full bg-morandi-sageDark transition-all duration-500 rounded-full';
+                bar.className = 'h-full bg-morandi-sage transition-all duration-500 rounded-full';
                 advice.innerHTML = `<i class="ph-fill ph-check-circle text-morandi-sageDark text-base"></i><span class="text-morandi-sageDark">今日${weekdayName}（本週剩 ${remainingDays} 天），平均每日還可用 <strong>${formatMoney(dailyAvg)}</strong></span>`;
             }
         }
