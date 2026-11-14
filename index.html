@@ -310,6 +310,63 @@
                 </div>
             </div>
 
+            <!-- 悠遊卡專區 (可設定目前餘額、儲值扣變動支出、消費僅扣悠遊卡餘額不重複扣預算) -->
+            <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-soft border border-morandi-border">
+                <div class="flex items-center justify-between gap-2 cursor-pointer" onclick="toggleEasyCardDetail()">
+                    <div class="flex items-center gap-3.5 min-w-0 flex-1">
+                        <div class="w-12 h-12 rounded-2xl bg-morandi-sageLight flex items-center justify-center text-morandi-sageDark shrink-0">
+                            <i class="ph-bold ph-ticket text-2xl"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <p class="text-base font-bold text-morandi-text">悠遊卡餘額專區</p>
+                                <span id="home-ec-count-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-morandi-sageLight text-morandi-sageDark font-bold">0 筆扣款</span>
+                            </div>
+                            <p class="text-xs sm:text-sm text-morandi-muted mt-0.5 break-words">記帳選「悠遊卡」僅扣此處餘額；「儲值」才會從所選變動支出扣款</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <div class="text-right">
+                            <span class="text-xs text-morandi-muted block">目前剩餘金額</span>
+                            <p id="home-ec-balance" class="text-xl font-bold text-morandi-sageDark leading-tight">$0</p>
+                        </div>
+                        <button type="button" class="w-10 h-10 rounded-2xl bg-morandi-bg hover:bg-morandi-border/60 flex items-center justify-center text-morandi-muted transition">
+                            <i id="ec-chevron" class="ph-bold ph-caret-down text-base transition-transform"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 展開之悠遊卡設定餘額、儲值與明細區塊 -->
+                <div id="home-ec-detail-body" class="hidden mt-4 pt-4 border-t border-morandi-border space-y-3">
+                    <!-- 直接設定目前悠遊卡餘額 -->
+                    <div class="bg-morandi-bg/60 p-3 rounded-2xl border border-morandi-border space-y-2">
+                        <label class="text-xs font-bold text-morandi-text block">⚙️ 設定悠遊卡目前餘額（直接校正金額）</label>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-bold text-morandi-muted">$</span>
+                            <input type="number" id="ec-set-balance-input" placeholder="輸入目前餘額" class="flex-1 min-w-0 px-3 py-1.5 text-sm font-bold bg-white rounded-xl border border-morandi-border focus:outline-none">
+                            <button onclick="setEasyCardBalanceDirectly()" class="px-3.5 py-1.5 rounded-xl bg-morandi-sage text-white text-xs font-bold hover:bg-morandi-sageDark transition shrink-0">
+                                儲存餘額
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 悠遊卡儲值 (會從所選的變動支出扣款，並增加悠遊卡餘額) -->
+                    <div class="bg-morandi-apricotLight/50 p-3 rounded-2xl border border-morandi-apricot space-y-2">
+                        <label class="text-xs font-bold text-morandi-apricotDark block">➕ 悠遊卡加值 / 儲值（將從所選變動支出扣款）</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <select id="ec-topup-category" class="px-2.5 py-1.5 text-xs font-bold bg-white rounded-xl border border-morandi-border text-morandi-text focus:outline-none"></select>
+                            <input type="number" id="ec-topup-amount" placeholder="儲值金額 (如 500)" class="px-3 py-1.5 text-xs font-bold bg-white rounded-xl border border-morandi-border focus:outline-none">
+                            <button onclick="topUpEasyCard()" class="py-1.5 px-3 rounded-xl bg-morandi-apricotDark text-white text-xs font-bold hover:opacity-90 transition">
+                                確認儲值並扣款
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 最近悠遊卡消費明細 -->
+                    <div id="home-ec-tx-list" class="space-y-2"></div>
+                </div>
+            </div>
+
             <!-- 快速搜尋列 -->
             <div class="bg-white rounded-2xl p-4 shadow-soft border border-morandi-border space-y-3">
                 <div class="relative">
@@ -772,18 +829,21 @@
                 </div>
             </div>
 
-            <!-- 付款方式 -->
+            <!-- 付款方式 (四欄等寬、同一行不換行，字塞不下於按鈕內換行) -->
             <div class="bg-white p-3.5 rounded-2xl border border-morandi-border space-y-2.5">
-                <label class="text-xs text-morandi-muted block">付款方式（選信用卡將自動導入信用卡帳單區塊）</label>
-                <div class="grid grid-cols-3 gap-2">
-                    <button type="button" onclick="selectPaymentMethod('cash')" id="pay-btn-cash" class="py-2.5 rounded-xl text-xs font-bold border border-morandi-sage bg-morandi-sage text-white transition flex items-center justify-center gap-1">
+                <label class="text-xs text-morandi-muted block">付款方式（選信用卡入帳單區；選悠遊卡僅扣悠遊卡餘額）</label>
+                <div class="grid grid-cols-4 gap-1.5">
+                    <button type="button" onclick="selectPaymentMethod('cash')" id="pay-btn-cash" class="w-full py-2 px-1 rounded-xl text-xs font-bold border border-morandi-sage bg-morandi-sage text-white transition flex items-center justify-center text-center leading-tight break-words">
                         💵 現金/轉帳
                     </button>
-                    <button type="button" onclick="selectPaymentMethod('credit')" id="pay-btn-credit" class="py-2.5 rounded-xl text-xs font-bold border border-morandi-border bg-morandi-bg text-morandi-text transition flex items-center justify-center gap-1">
+                    <button type="button" onclick="selectPaymentMethod('credit')" id="pay-btn-credit" class="w-full py-2 px-1 rounded-xl text-xs font-bold border border-morandi-border bg-morandi-bg text-morandi-text transition flex items-center justify-center text-center leading-tight break-words">
                         💳 信用卡
                     </button>
-                    <button type="button" onclick="selectPaymentMethod('mobile')" id="pay-btn-mobile" class="py-2.5 rounded-xl text-xs font-bold border border-morandi-border bg-morandi-bg text-morandi-text transition flex items-center justify-center gap-1">
+                    <button type="button" onclick="selectPaymentMethod('mobile')" id="pay-btn-mobile" class="w-full py-2 px-1 rounded-xl text-xs font-bold border border-morandi-border bg-morandi-bg text-morandi-text transition flex items-center justify-center text-center leading-tight break-words">
                         📱 行動支付
+                    </button>
+                    <button type="button" onclick="selectPaymentMethod('easycard')" id="pay-btn-easycard" class="w-full py-2 px-1 rounded-xl text-xs font-bold border border-morandi-border bg-morandi-bg text-morandi-text transition flex items-center justify-center text-center leading-tight break-words">
+                        🎫 悠遊卡
                     </button>
                 </div>
             </div>
@@ -1105,6 +1165,7 @@
             selectedPaymentMethod: 'cash',
             selectedMainType: 'meal',
             lastKnownToday: getTodayLocalISO(),
+            easyCardBalance: 0,
             settings: {
                 appTitle: '記帳與預算管理',
                 themePreset: 'sage',
@@ -1165,6 +1226,7 @@
                 parsed.vault = Object.assign({ plannedSavedTotal: 0, surplusSavedTotal: 0, goals: [], logs: [] }, parsed.vault || {});
                 if (!Array.isArray(parsed.vault.goals)) parsed.vault.goals = [];
                 if (!Array.isArray(parsed.vault.logs)) parsed.vault.logs = [];
+                if (typeof parsed.easyCardBalance !== 'number') parsed.easyCardBalance = Number(parsed.easyCardBalance) || 0;
                 const todayYM = getCurrentYearMonth();
                 if (!parsed.months[todayYM]) {
                     parsed.months[todayYM] = createEmptyMonthData();
@@ -1443,20 +1505,32 @@
 
         const MEAL_SUB_CATEGORIES = ['早餐', '午餐', '晚餐', '點心', '宵夜', '飲料', '其他'];
 
+        // 判斷是否為「餐費」交易：修正過去變動支出的「其他」與餐費的「其他」混算的 Bug
         function isMealTransaction(tx) {
             if (!tx) return false;
-            return tx.mainType === 'meal' || tx.categoryName === '餐費' || tx.categoryName === '下午茶/點心' || MEAL_SUB_CATEGORIES.includes(tx.categoryName);
+            // 若該筆交易已明確紀錄主分類 (mainType)，嚴格以 mainType === 'meal' 為準！
+            if (tx.mainType) {
+                return tx.mainType === 'meal';
+            }
+            // 兼容舊資料（無 mainType 欄位時）
+            return tx.categoryName === '餐費' || tx.categoryName === '下午茶/點心' || MEAL_SUB_CATEGORIES.includes(tx.categoryName);
+        }
+
+        // 判斷該筆交易是否需要計入當月/當週預算與總花費扣款（使用悠遊卡消費僅扣悠遊卡餘額，不重複扣預算）
+        function isBudgetDeductingTx(tx) {
+            if (!tx) return false;
+            return tx.paymentMethod !== 'easycard';
         }
 
         function getMealSpentByWeek(mData, weekNum) {
             return mData.transactions
-                .filter(tx => isMealTransaction(tx) && Number(tx.week) === Number(weekNum))
+                .filter(tx => isMealTransaction(tx) && isBudgetDeductingTx(tx) && Number(tx.week) === Number(weekNum))
                 .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
         }
 
         function getTotalMealSpent(mData) {
             return mData.transactions
-                .filter(tx => isMealTransaction(tx))
+                .filter(tx => isMealTransaction(tx) && isBudgetDeductingTx(tx))
                 .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
         }
 
@@ -1564,6 +1638,103 @@
             if (chevron) chevron.classList.toggle('rotate-180');
         }
 
+        function renderHomeEasyCardSummary() {
+            const mData = getMonthData();
+            const ecTxs = mData.transactions.filter(t => t.paymentMethod === 'easycard');
+            const balanceEl = document.getElementById('home-ec-balance');
+            const badgeEl = document.getElementById('home-ec-count-badge');
+            const inputEl = document.getElementById('ec-set-balance-input');
+            const catSelect = document.getElementById('ec-topup-category');
+
+            const bal = Number(appState.easyCardBalance) || 0;
+            if (balanceEl) {
+                balanceEl.textContent = formatMoney(bal);
+                balanceEl.className = `text-xl font-bold leading-tight ${bal < 0 ? 'text-morandi-roseDark' : 'text-morandi-sageDark'}`;
+            }
+            if (badgeEl) badgeEl.textContent = `${ecTxs.length} 筆扣款`;
+            if (inputEl && document.activeElement !== inputEl) {
+                inputEl.value = bal;
+            }
+            if (catSelect) {
+                const varOpts = mData.variableExpenses.map(v => v.name);
+                if (varOpts.length === 0) varOpts.push('通勤交通');
+                const prevVal = catSelect.value;
+                catSelect.innerHTML = varOpts.map(name => `<option value="${name}" ${name === prevVal ? 'selected' : ''}>扣款：${name}</option>`).join('');
+            }
+
+            const listEl = document.getElementById('home-ec-tx-list');
+            if (!listEl) return;
+            if (ecTxs.length === 0) {
+                listEl.innerHTML = `<p class="text-xs text-morandi-muted text-center py-2">本月尚無悠遊卡扣款紀錄</p>`;
+            } else {
+                listEl.innerHTML = ecTxs.slice(0, 5).map(tx => `
+                    <div class="flex items-center justify-between text-xs bg-morandi-bg/60 px-3 py-2 rounded-xl">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="text-morandi-muted font-medium shrink-0">${tx.date.slice(5)}</span>
+                            <span class="font-bold text-morandi-text truncate">${tx.note || tx.categoryName}</span>
+                        </div>
+                        <span class="font-bold text-morandi-sageDark shrink-0">-${formatMoney(tx.amount)} (僅扣悠遊卡)</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function toggleEasyCardDetail() {
+            const body = document.getElementById('home-ec-detail-body');
+            const chevron = document.getElementById('ec-chevron');
+            if (!body) return;
+            body.classList.toggle('hidden');
+            if (chevron) chevron.classList.toggle('rotate-180');
+        }
+
+        function setEasyCardBalanceDirectly() {
+            const val = Number(document.getElementById('ec-set-balance-input')?.value);
+            if (isNaN(val)) {
+                showToast('請輸入有效的悠遊卡餘額');
+                return;
+            }
+            appState.easyCardBalance = val;
+            saveState();
+            renderHomeEasyCardSummary();
+            showToast(`已更新悠遊卡目前餘額為 ${formatMoney(val)}`);
+        }
+
+        function topUpEasyCard() {
+            const amtInput = document.getElementById('ec-topup-amount');
+            const catSelect = document.getElementById('ec-topup-category');
+            const amount = Number(amtInput?.value);
+            const categoryName = catSelect?.value || '通勤交通';
+            if (!amount || amount <= 0) {
+                showToast('請輸入有效的儲值金額');
+                return;
+            }
+
+            // 1. 增加悠遊卡餘額
+            appState.easyCardBalance = (Number(appState.easyCardBalance) || 0) + amount;
+
+            // 2. 新增一筆從所選「變動支出」扣款的儲值交易
+            const todayStr = getTodayLocalISO();
+            const mData = getMonthData();
+            mData.transactions.unshift({
+                id: 'tx_' + Date.now(),
+                date: todayStr,
+                amount,
+                mainType: 'variable',
+                categoryName,
+                week: getWeekFromDateStr(todayStr),
+                note: `悠遊卡儲值 (${categoryName})`,
+                tags: ['#悠遊卡儲值'],
+                photo: '',
+                paymentMethod: 'cash',
+                isEasyCardTopUp: true
+            });
+
+            if (amtInput) amtInput.value = '';
+            saveState();
+            renderAll();
+            showToast(`已儲值 ${formatMoney(amount)} 至悠遊卡，並從「${categoryName}」扣款！`);
+        }
+
         function filterByCreditCard() {
             document.getElementById('search-input').value = '信用卡';
             handleSearchChange();
@@ -1593,9 +1764,9 @@
             const yesterdayYM = yesterdayStr.slice(0, 7);
             const mData = getMonthData();
 
-            // 收集昨日所有交易（若昨日剛好是上個月底，也會自動從上個月帳本讀取）
+            // 收集昨日所有交易（若昨日剛好是上個月底，也會自動從上個月帳本讀取；悠遊卡消費僅扣悠遊卡餘額不重複計入預算總花費）
             const targetMonthObj = appState.months[yesterdayYM] || mData;
-            const dayTxs = (targetMonthObj.transactions || []).filter(tx => tx.date === yesterdayStr);
+            const dayTxs = (targetMonthObj.transactions || []).filter(tx => tx.date === yesterdayStr && isBudgetDeductingTx(tx));
 
             const totalSpent = dayTxs.reduce((sum, tx) => sum + Number(tx.amount), 0);
             const mealSpent = dayTxs.filter(tx => isMealTransaction(tx)).reduce((sum, tx) => sum + Number(tx.amount), 0);
@@ -1705,6 +1876,9 @@
             if (tx.paymentMethod === 'mobile') {
                 return `<span class="text-xs px-2 py-0.5 rounded-md bg-morandi-sageLight text-morandi-sageDark font-semibold">📱 行動支付</span>`;
             }
+            if (tx.paymentMethod === 'easycard') {
+                return `<span class="text-xs px-2 py-0.5 rounded-md bg-morandi-apricotLight text-morandi-apricotDark font-bold">🎫 悠遊卡扣款(不扣預算)</span>`;
+            }
             return `<span class="text-xs px-2 py-0.5 rounded-md bg-morandi-bg text-morandi-muted font-medium">💵 現金/轉帳</span>`;
         }
 
@@ -1719,7 +1893,7 @@
                 const inNote = (tx.note || '').toLowerCase().includes(query);
                 const inCat = (tx.categoryName || '').toLowerCase().includes(query);
                 const inTags = (tx.tags || []).some(t => t.toLowerCase().includes(query));
-                const inPay = (tx.paymentMethod === 'credit' && '信用卡'.includes(query));
+                const inPay = (tx.paymentMethod === 'credit' && '信用卡'.includes(query)) || (tx.paymentMethod === 'easycard' && '悠遊卡'.includes(query));
                 return inNote || inCat || inTags || inPay;
             });
 
@@ -1755,12 +1929,12 @@
 
             container.innerHTML = dates.map(date => {
                 const items = grouped[date];
-                const daySum = items.reduce((s, i) => s + Number(i.amount), 0);
+                const daySum = items.filter(i => isBudgetDeductingTx(i)).reduce((s, i) => s + Number(i.amount), 0);
                 return `
                     <div class="bg-white rounded-2xl p-4 shadow-soft border border-morandi-border space-y-3">
                         <div class="flex items-center justify-between border-b border-morandi-border/70 pb-2.5">
                             <span class="text-sm font-bold text-morandi-text">${date}</span>
-                            <span class="text-xs font-bold text-morandi-muted">當日小計 ${formatMoney(daySum)}</span>
+                            <span class="text-xs font-bold text-morandi-muted">當日預算支出小計 ${formatMoney(daySum)}</span>
                         </div>
                         <div class="divide-y divide-morandi-border/50">
                             ${items.map(tx => `
@@ -1805,6 +1979,15 @@
 
         function deleteTransaction(txId) {
             const mData = getMonthData();
+            const target = mData.transactions.find(t => t.id === txId);
+            if (target) {
+                // 若刪除的是悠遊卡消費，將金額退回悠遊卡餘額；若刪除的是悠遊卡儲值，從悠遊卡餘額扣回
+                if (target.paymentMethod === 'easycard') {
+                    appState.easyCardBalance = (Number(appState.easyCardBalance) || 0) + (Number(target.amount) || 0);
+                } else if (target.isEasyCardTopUp) {
+                    appState.easyCardBalance = (Number(appState.easyCardBalance) || 0) - (Number(target.amount) || 0);
+                }
+            }
             mData.transactions = mData.transactions.filter(t => t.id !== txId);
             checkAndAutoSettleYesterday();
             saveState();
@@ -2028,21 +2211,23 @@
         // ==================== MODAL 1: 新增與編輯記帳共用邏輯 ====================
         function selectPaymentMethod(method) {
             appState.selectedPaymentMethod = method;
-            const methods = ['cash', 'credit', 'mobile'];
+            const methods = ['cash', 'credit', 'mobile', 'easycard'];
             methods.forEach(m => {
                 const btn = document.getElementById(`pay-btn-${m}`);
+                if (!btn) return;
                 if (m === method) {
-                    btn.className = 'py-2.5 rounded-xl text-xs font-bold border border-morandi-sage bg-morandi-sage text-white transition flex items-center justify-center gap-1';
+                    btn.className = 'w-full py-2 px-1 rounded-xl text-xs font-bold border border-morandi-sage bg-morandi-sage text-white transition flex items-center justify-center text-center leading-tight break-words';
                 } else {
-                    btn.className = 'py-2.5 rounded-xl text-xs font-bold border border-morandi-border bg-morandi-bg text-morandi-text transition flex items-center justify-center gap-1';
+                    btn.className = 'w-full py-2 px-1 rounded-xl text-xs font-bold border border-morandi-border bg-morandi-bg text-morandi-text transition flex items-center justify-center text-center leading-tight break-words';
                 }
             });
         }
 
         function detectMainTypeByCategory(catName) {
-            if (!catName || catName === '餐費' || MEAL_SUB_CATEGORIES.includes(catName)) return 'meal';
             const mData = getMonthData();
             if (mData.fixedExpenses.some(f => f.name === catName)) return 'fixed';
+            if (mData.variableExpenses.some(v => v.name === catName)) return 'variable';
+            if (!catName || catName === '餐費' || MEAL_SUB_CATEGORIES.includes(catName)) return 'meal';
             return 'variable';
         }
 
@@ -2192,9 +2377,8 @@
         }
 
         function handleTxCategoryChange() {
-            const cat = document.getElementById('tx-category').value;
             const weekBox = document.getElementById('tx-week-box');
-            if (appState.selectedMainType === 'meal' || cat === '餐費' || MEAL_SUB_CATEGORIES.includes(cat)) {
+            if (appState.selectedMainType === 'meal') {
                 weekBox.classList.remove('opacity-40', 'pointer-events-none');
             } else {
                 weekBox.classList.add('opacity-40', 'pointer-events-none');
@@ -2252,6 +2436,7 @@
                 ? rawTags.split(/\s+/).map(t => (t.startsWith('#') ? t : `#${t}`))
                 : [];
             const paymentMethod = appState.selectedPaymentMethod || 'cash';
+            const mainType = appState.selectedMainType || detectMainTypeByCategory(categoryName);
 
             const mData = getMonthData();
 
@@ -2259,9 +2444,18 @@
                 // 更新既有明細
                 const target = mData.transactions.find(t => t.id === appState.editingTxId);
                 if (target) {
+                    // 先還原舊的悠遊卡餘額影響
+                    if (target.paymentMethod === 'easycard') {
+                        appState.easyCardBalance = (Number(appState.easyCardBalance) || 0) + (Number(target.amount) || 0);
+                    }
+                    // 套用新的悠遊卡餘額影響
+                    if (paymentMethod === 'easycard') {
+                        appState.easyCardBalance = (Number(appState.easyCardBalance) || 0) - amount;
+                    }
+
                     target.date = date;
                     target.amount = amount;
-                    target.mainType = appState.selectedMainType || detectMainTypeByCategory(categoryName);
+                    target.mainType = mainType;
                     target.categoryName = categoryName;
                     target.week = week;
                     target.note = note;
@@ -2269,7 +2463,7 @@
                     target.photo = appState.uploadedPhotoData || '';
                     target.paymentMethod = paymentMethod;
                 }
-                if (appState.selectedMainType === 'meal' || categoryName === '餐費' || MEAL_SUB_CATEGORIES.includes(categoryName)) {
+                if (mainType === 'meal') {
                     appState.activeWeek = week;
                 }
                 if (date === getYesterdayLocalISO()) {
@@ -2282,22 +2476,27 @@
                 return;
             }
 
+            // 若選擇悠遊卡付款，直接從悠遊卡剩餘金額扣除，不會重複扣預算
+            if (paymentMethod === 'easycard') {
+                appState.easyCardBalance = (Number(appState.easyCardBalance) || 0) - amount;
+            }
+
             // 新增明細
             mData.transactions.unshift({
                 id: 'tx_' + Date.now(),
                 date,
                 amount,
-                mainType: appState.selectedMainType || detectMainTypeByCategory(categoryName),
+                mainType,
                 categoryName,
                 week,
                 note,
                 tags,
                 photo: appState.uploadedPhotoData || '',
                 paymentMethod,
-                cardName: paymentMethod === 'credit' ? '信用卡' : ''
+                cardName: paymentMethod === 'credit' ? '信用卡' : (paymentMethod === 'easycard' ? '悠遊卡' : '')
             });
 
-            if (appState.selectedMainType === 'meal' || categoryName === '餐費' || MEAL_SUB_CATEGORIES.includes(categoryName)) {
+            if (mainType === 'meal') {
                 appState.activeWeek = week;
             }
             if (date === getYesterdayLocalISO()) {
@@ -2307,14 +2506,21 @@
             saveState();
             closeAddTransactionModal();
             renderAll();
-            showToast(paymentMethod === 'credit' ? '已記帳並歸入「信用卡帳單區」！' : '已儲存花費並更新餘額！');
+            if (paymentMethod === 'easycard') {
+                showToast(`已從悠遊卡扣除 ${formatMoney(amount)}（不重複扣當月預算）！`);
+            } else if (paymentMethod === 'credit') {
+                showToast('已記帳並歸入「信用卡帳單區」！');
+            } else {
+                showToast('已儲存花費並更新餘額！');
+            }
         }
 
         // ==================== TAB 3: 月度分析與檢討 ====================
         function renderAnalysisTab() {
             const mData = getMonthData();
             const income = getTotalMonthlyIncome(mData);
-            const totalSpent = mData.transactions.reduce((s, t) => s + Number(t.amount), 0);
+            const budgetTxs = mData.transactions.filter(t => isBudgetDeductingTx(t));
+            const totalSpent = budgetTxs.reduce((s, t) => s + Number(t.amount), 0);
             const surplus = income - totalSpent;
 
             document.getElementById('analysis-income').textContent = formatMoney(income);
@@ -2343,9 +2549,17 @@
                 `;
             }
 
+            // 排行榜與各分類統計：區分餐費與非餐費，防止變動支出的「其他」與餐費的「其他」混在一起
             const catTotals = {};
-            mData.transactions.forEach(tx => {
-                catTotals[tx.categoryName] = (catTotals[tx.categoryName] || 0) + Number(tx.amount);
+            const nonMealCatTotals = {};
+            budgetTxs.forEach(tx => {
+                if (isMealTransaction(tx)) {
+                    const label = `餐費(${tx.categoryName})`;
+                    catTotals[label] = (catTotals[label] || 0) + Number(tx.amount);
+                } else {
+                    catTotals[tx.categoryName] = (catTotals[tx.categoryName] || 0) + Number(tx.amount);
+                    nonMealCatTotals[tx.categoryName] = (nonMealCatTotals[tx.categoryName] || 0) + Number(tx.amount);
+                }
             });
 
             const sortedCats = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
@@ -2390,8 +2604,8 @@
 
             const budgetItems = [
                 { name: '餐費', budget: getTotalMealBudget(mData), spent: getTotalMealSpent(mData) },
-                ...mData.variableExpenses.map(v => ({ name: v.name, budget: Number(v.amount) || 0, spent: catTotals[v.name] || 0 })),
-                ...mData.fixedExpenses.map(f => ({ name: f.name, budget: Number(f.amount) || 0, spent: catTotals[f.name] || 0 }))
+                ...mData.variableExpenses.map(v => ({ name: v.name, budget: Number(v.amount) || 0, spent: nonMealCatTotals[v.name] || 0 })),
+                ...mData.fixedExpenses.map(f => ({ name: f.name, budget: Number(f.amount) || 0, spent: nonMealCatTotals[f.name] || 0 }))
             ];
 
             const reviewEl = document.getElementById('budget-review-list');
@@ -2442,7 +2656,7 @@
         function transferSurplusToVault() {
             const mData = getMonthData();
             const income = getTotalMonthlyIncome(mData);
-            const totalSpent = mData.transactions.reduce((s, t) => s + Number(t.amount), 0);
+            const totalSpent = mData.transactions.filter(t => isBudgetDeductingTx(t)).reduce((s, t) => s + Number(t.amount), 0);
             const surplus = income - totalSpent;
             if (surplus <= 0) {
                 showToast('目前尚無正數月結餘可轉入金庫');
@@ -2857,6 +3071,7 @@
 
             renderMealDynamicCard();
             renderHomeCreditCardSummary();
+            renderHomeEasyCardSummary();
             renderSettlementCard();
             renderQuickTagBar();
             renderTransactionsList();
